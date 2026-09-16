@@ -2262,3 +2262,46 @@ pre.content {
   margin-bottom:22px; background:#fff; border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow) }
 .model-kv div { font-size:11px; color:var(--muted) }
 .model-kv strong { display:block; font-size:12px; font-weight:500; color:var(--ink); margin-top:6px; word-break:break-all }
+
+/* ── 列表页：表头排序 + 分页跳页（2026-09-16）────────────────────
+   起因：政策库一页 20 条、只能一页页翻、且固定按 id 倒序；
+   库涨到一千多条后，"按发布日期看最新一批"这件事在界面上做不到。
+   这里把排序做成表头链接（无 JS，可直接收藏/分享地址），
+   并补上每页条数与跳页——长列表逐页翻是最耗人的操作。 */
+table.list th a.th-sort { display:inline-flex; align-items:center; gap:5px; color:inherit;
+  font:inherit; text-decoration:none; cursor:pointer }
+table.list th a.th-sort:hover { color:#2c4a6b }
+table.list th a.th-sort.on { color:#2c4a6b; font-weight:500 }
+table.list th .sort-mark { font-size:10px; line-height:1; color:#c3ccd6 }
+table.list th a.th-sort.on .sort-mark { color:#b09564 }
+table.list th a.th-sort:focus-visible { outline:2px solid #b09564; outline-offset:2px; border-radius:3px }
+td.td-status { white-space:nowrap }
+td.td-status .dim { margin-left:6px }
+
+/* 分页条原来只有"上一页/第 N 页/下一页"单行靠右；现在多了总数、每页条数、
+   跳页与上下两份，窄屏必须能换行，否则会挤成一条看不见的缝。 */
+.pager { flex-wrap:wrap; row-gap:9px }
+.pager .pg b { color:#3c4a5a; font-weight:500; font-variant-numeric:tabular-nums }
+.pager-nav { display:inline-flex; align-items:center; gap:7px }
+.pager .btn.off { opacity:.4; cursor:not-allowed }
+.pg-per, .pg-jump { display:inline-flex; align-items:center; gap:7px; font-size:11px; color:#8290a0 }
+.pg-per label, .pg-jump label { display:inline-flex; align-items:center; gap:5px; margin:0 }
+.pg-per select { padding:4px 7px; font-size:11px; border:1px solid var(--line); border-radius:4px;
+  background:#fff; color:var(--ink) }
+.pg-jump input[type=number] { width:58px; padding:4px 6px; font-size:11px; text-align:center;
+  border:1px solid var(--line); border-radius:4px; background:#fff; color:var(--ink);
+  font-variant-numeric:tabular-nums }
+.pg-per select:focus-visible, .pg-jump input:focus-visible { outline:2px solid #b09564; outline-offset:1px }
+
+/* 只给读屏用的说明文字（例如表头最后一列的"操作"） */
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0 0 0 0); white-space:nowrap; border:0 }
+
+/* 表格标题栏右侧：说明文字与"导出当前筛选"按钮同一行，窄屏换行不挤压标题 */
+.table-caption .caption-side { display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:flex-end }
+.table-caption .caption-side .btn { flex:none }
+
+/* 政策库有 7 列、标题又长：给个最小宽度，窄屏宁可横向滚动（.table-scroll 已支持），
+   也不要把标题挤成一列一个字。注：`table.list.wide` 这个类名此前在模板里用了，
+   但 CSS 里并没有定义——属于"看起来生效、其实没写"的一处。 */
+table.list.wide { min-width:940px }

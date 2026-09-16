@@ -1,15 +1,46 @@
 {% extends 'base.html' %}
 {% from '_ui.html' import page_head,empty,status %}
+
+{# 与政策库同一套分页：总数、每页条数、跳页。
+   此前这里固定只取最近 50 条且没有翻页，更早的批次在界面上等于不存在。 #}
+{% macro pager() -%}
+<div class="pager">
+  <span class="pg">共 <b>{{ total }}</b> 条{% if total %} · 第 {{ page }} / {{ pages }} 页{% endif %}</span>
+  <form class="pg-per" method="get" action="{{ url_for('runs') }}">
+    <label>每页
+      <select name="per" aria-label="每页显示条数" onchange="this.form.submit()">
+        {% for size in page_sizes %}<option value="{{ size }}" {% if size == per %}selected{% endif %}>{{ size }}</option>{% endfor %}
+      </select> 条</label>
+    <noscript><button class="btn sm" type="submit">应用</button></noscript>
+  </form>
+  <span class="pager-nav">
+    {% if page > 1 %}<a class="btn sm" href="{{ url_for('runs') }}{{ qs(page=page-1) }}">上一页</a>
+    {% else %}<span class="btn sm off" aria-disabled="true">上一页</span>{% endif %}
+    {% if page < pages %}<a class="btn sm" href="{{ url_for('runs') }}{{ qs(page=page+1) }}">下一页</a>
+    {% else %}<span class="btn sm off" aria-disabled="true">下一页</span>{% endif %}
+  </span>
+  <form class="pg-jump" method="get" action="{{ url_for('runs') }}">
+    <label>跳至<input type="number" name="page" min="1" max="{{ pages }}" value="{{ page }}" aria-label="跳转到第几页">页</label>
+    <button class="btn sm" type="submit">跳转</button>
+  </form>
+</div>
+{%- endmacro %}
+
 {% block title %}处理进度 · 投资政策{% endblock %}
 {% block content %}
 {{ page_head('', '处理进度', '先看正在处理什么，再处理需要你确认的文件。') }}
 {% if running %}<p class="flash warn" role="status">任务处理中，每4秒更新一次。可离开此页，任务会继续。</p>{% endif %}
+{% if clamped %}
+<p class="flash warn" role="status">第 {{ page_requested }} 页超出范围（共 {{ pages }} 页），已跳到最后一页。</p>
+{% endif %}
 {% if rows %}
 {% set r=rows[0] %}{% include '_run_progress.html' %}
 <section class="panel"><div class="panel-heading"><h2>最近批次</h2><a href="{{ url_for('sources') }}">开始采集</a></div>
-<div class="table-scroll"><table class="list"><thead><tr><th>来源</th><th>状态</th><th>开始时间</th><th>新增 / 更新</th><th>待复核</th><th></th></tr></thead><tbody>
+<div class="table-scroll" role="region" aria-label="运行记录" tabindex="0"><table class="list"><thead><tr><th scope="col">来源</th><th scope="col">状态</th><th scope="col">开始时间</th><th scope="col">新增 / 更新</th><th scope="col">待复核</th><th scope="col"><span class="sr-only">操作</span></th></tr></thead><tbody>
 {% for r in rows %}<tr><td>{{ '全国批次' if r.kind=='batch' else smap.get(r.source_id,'样例') }}</td><td>{{ status(r.status) }}</td><td>{{ (r.started_at or '')[:16] }}</td><td>{{ r.summary_obj.get('ingested',0) }} / {{ r.summary_obj.get('updated',0) }}</td><td>{{ r.summary_obj.get('need_review',0) }}</td><td><a href="{{ url_for('run_detail',run_id=r.run_id) }}">{{ '查看各省结果' if r.kind=='batch' else '查看过程' }}</a></td></tr>{% endfor %}
-</tbody></table></div></section>
+</tbody></table></div>
+{{ pager() }}
+</section>
 {% else %}{{ empty('暂无任务','选择官网来源，开始采集。','activity') }}{% endif %}
 {% endblock %}
 {% block script %}{% if running %}<script>setTimeout(()=>location.reload(),4000);</script>{% endif %}{% endblock %}

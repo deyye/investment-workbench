@@ -21,6 +21,19 @@ from typing import Any, Iterator, Optional
 from .models import now
 import threading
 
+# 政策库列表的**可排序列白名单**：列表页的表头 key -> 真实 SQL 表达式。
+# 只在这里定义一次，排序、表头渲染、默认方向都从它派生，
+# 避免"表头加了列、排序还是老的"这种两边不同步。
+POLICY_SORTABLE = {
+    "id":       "p.id",
+    "date":     "p.page_date",
+    "title":    "p.title",
+    "wenhao":   "p.wenhao",
+    "category": "p.category_names",
+    "region":   "p.region",
+    "todo":     "p.todo_type",
+}
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS source_configs (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -251,10 +264,18 @@ class Database:
             r = self._conn.execute("SELECT * FROM policies WHERE id=?", (pid,)).fetchone()
             return dict(r) if r else None
 
-    def query_policies(self, region: str = "", category: str = "", keyword: str = "",
-                       review_status: str = "", todo: str = "", limit: int = 100,
-                       offset: int = 0) -> list[dict]:
-        sql, args = "SELECT p.* FROM policies p WHERE version=(SELECT MAX(version) FROM policies v WHERE v.policy_key=p.policy_key)", []
+    @staticmethod
+    def _policy_filters(region: str = "", category: str = "", keyword: str = "",
+                        review_status: str = "", todo: str = "") -> tuple[str, list]:
+        """政策库的**唯一**筛选口径，返回 (WHERE 片段, 参数)。
+
+        为什么单独抽出来：列表页要同时给出「当前页数据」和「符合条件的总数」，
+        两者必须用同一套条件，否则会出现"共 137 条，翻到第 7 页是空的"这类
+        自相矛盾的界面。这类"同一判据写两遍、然后慢慢分叉"的坑，
+        在本项目里已经因为别的原因踩过好几次，所以这里只留一处定义。
+        """
+        sql = " WHERE version=(SELECT MAX(version) FROM policies v WHERE v.policy_key=p.policy_key)"
+        args: list = []
         if todo:
             # 待办类型由**分类环节派生后落库**（policies.todo_type），筛选直接读列。
             # 早期实现是用 CASE 表达式临时推导（两条并行分支各写一套），
@@ -277,8 +298,46 @@ class Database:
         elif review_status:
             sql += " AND review_status=?"
             args.append(review_status)
-        sql += " ORDER BY id DESC LIMIT ? OFFSET ?"
-        args += [limit, offset]
+        return sql, args
+
+    @staticmethod
+    def policy_order_by(sort: str = "", order: str = "") -> str:
+        """把列表页的排序参数翻成 ORDER BY，**只认白名单**。
+
+        两点是刻意的：
+
+        1) **不拼接用户输入**。排序列名走 `POLICY_SORTABLE` 映射，参数认不出就用默认，
+           既避免注入，也避免一个手改错的 URL 让整页 500。
+        2) **日期为空的行恒排最后**。SQLite 里 NULL（以及我们写入的空串）
+           在升序时排最前，于是"按日期升序"的第一页会是一堆没有日期的记录——
+           那恰恰是最没用的一屏。加上 `IS NULL OR =''` 这一级排序键后，
+           无论升序降序，没有日期的都沉到最后。
+        3) 末尾固定追加 `p.id DESC` 作**稳定分页**的兜底键。否则同一天发布的
+           几十份文件在翻页时顺序不稳定，会出现"某条在第 2 页看过、第 3 页又出现"。
+        """
+        expr = POLICY_SORTABLE.get(sort, POLICY_SORTABLE['id'])
+        direction = 'ASC' if str(order).lower() == 'asc' else 'DESC'
+        parts = []
+        if sort and sort != 'id':
+            parts.append(f"({expr} IS NULL OR {expr}='') ASC")
+        parts.append(f"{expr} {direction}")
+        if expr != POLICY_SORTABLE['id']:
+            parts.append("p.id DESC")
+        return " ORDER BY " + ", ".join(parts)
+
+    def count_policies(self, region: str = "", category: str = "", keyword: str = "",
+                       review_status: str = "", todo: str = "") -> int:
+        sql, args = self._policy_filters(region, category, keyword, review_status, todo)
+        with self._conn:
+            return int(self._conn.execute("SELECT COUNT(*) FROM policies p" + sql, args).fetchone()[0])
+
+    def query_policies(self, region: str = "", category: str = "", keyword: str = "",
+                       review_status: str = "", todo: str = "", limit: int = 100,
+                       offset: int = 0, sort: str = "", order: str = "") -> list[dict]:
+        sql, args = self._policy_filters(region, category, keyword, review_status, todo)
+        sql = ("SELECT p.* FROM policies p" + sql + self.policy_order_by(sort, order)
+               + " LIMIT ? OFFSET ?")
+        args = [*args, limit, offset]
         with self._conn:
             rows = [dict(r) for r in self._conn.execute(sql, args)]
             if keyword and rows:
@@ -329,9 +388,24 @@ class Database:
                 (status, json.dumps(summary, ensure_ascii=False), now(), model_version, note, run_id),
             )
 
-    def list_runs(self, limit: int = 20) -> list[dict]:
+    def list_runs(self, limit: int = 20, offset: int = 0) -> list[dict]:
         with self._conn:
-            return [dict(r) for r in self._conn.execute("SELECT * FROM run_logs ORDER BY id DESC LIMIT ?", (limit,))]
+            return [dict(r) for r in self._conn.execute(
+                "SELECT * FROM run_logs ORDER BY id DESC LIMIT ? OFFSET ?", (limit, offset))]
+
+    def count_runs(self, status: str = "") -> int:
+        """运行记录总数（可按状态过滤）。
+
+        有了它，处理进度页才能给出"第 x/y 页"并允许跳页——此前固定只取最近 50 条，
+        更早的批次在界面上等于不存在（一次全国采集会留下 37 条记录，很快就超）。
+        状态过滤则用于"整库是否还有任务在跑"，避免只看当前页导致自动刷新停掉。
+        """
+        sql, args = "SELECT COUNT(*) FROM run_logs", []
+        if status:
+            sql += " WHERE status=?"
+            args.append(status)
+        with self._conn:
+            return int(self._conn.execute(sql, args).fetchone()[0])
 
     def agent_event(self, run_id, fetch_id, action, status, message):
         with self.tx() as cur:

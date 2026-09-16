@@ -12,20 +12,47 @@
 """
 from __future__ import annotations
 
+import csv
+import datetime
+import io
 import json
 import threading
 import secrets
 import time
 from pathlib import Path
+from urllib.parse import urlencode
 
-from flask import Flask, abort, flash, redirect, render_template, request, url_for, g, session, send_file
+from flask import (Flask, Response, abort, flash, redirect, render_template, request,
+                   url_for, g, session, send_file)
 
 from .config import AppConfig
-from .db import Database
+from .db import Database, POLICY_SORTABLE
 from .pipeline import Pipeline
 from .todo import TODO_META, TODO_ORDER
 
 CAT_CODES = {"guide": "引导类", "access": "准入类", "guarantee": "保障类", "incentive": "激励约束类"}
+
+# 每页条数的候选值。给范围而不是自由输入：既挡住 `per=100000` 这类拖垮页面的
+# 取值，也挡住 `per=0`（会算出除零与"共 0 页"）。
+PAGE_SIZES = (20, 50, 100)
+
+#: 单次导出的上限。导出是"当前筛选结果"，正常用法会先收窄条件；
+#: 给个上限是为了避免误点"全部导出"时一次性拉出十几万行把浏览器拖住。
+EXPORT_LIMIT = 5000
+
+# 政策库表头：(排序 key, 显示名, 点第一次时的方向)。
+# 方向按列的性质给默认：日期想先看最新的，标题/文号/地区想先看首字靠前的。
+POLICY_SORT_COLUMNS = (
+    ("id", "ID", "desc"),
+    ("title", "标题", "asc"),
+    ("wenhao", "文号", "asc"),
+    ("category", "类别", "asc"),
+    ("region", "地区", "asc"),
+    ("date", "日期", "desc"),
+    ("todo", "状态 / 待办", "asc"),
+)
+POLICY_SORT_DEFAULT_DIR = {key: direction for key, _label, direction in POLICY_SORT_COLUMNS}
+POLICY_SORT_LABELS = {key: label for key, label, _direction in POLICY_SORT_COLUMNS}
 
 
 def _form_prefer(cfg) -> str:
@@ -53,6 +80,14 @@ def row_todo(policy: dict) -> str:
 
 # 串行化"运行采集"，避免同一时刻多线程重复抓取同一来源
 _RUN_LOCK = threading.Lock()
+#: 复核状态 -> 中文名。筛选下拉与列表标签**共用这一处**，避免两处各列一份后慢慢对不上。
+REVIEW_LABELS = {
+    "pending": "待复核",
+    "confirmed": "人工确认",
+    "confirmed_auto": "模型通过",
+    "adjusted": "已调整",
+    "rejected": "已剔除",
+}
 _REVIEW_STYLE = {
     "pending": "warn", "confirmed": "ok", "confirmed_auto": "ok",
     "adjusted": "ok", "rejected": "bad",
@@ -138,20 +173,122 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
         region = request.args.get("region", "").strip()
         review = request.args.get("review", "").strip()
         todo = request.args.get("todo", "").strip()
-        page = max(request.args.get("page", 1, type=int), 1)
-        per = 20
+
+        # 排序：列名走白名单（认不出就用默认），方向也只在 asc/desc 里取值。
+        # 手改错的 URL 会安静地退回默认视图，而不是 500 或报错。
+        sort = request.args.get("sort", "").strip()
+        if sort not in POLICY_SORTABLE:
+            sort = "id"
+        default_dir = POLICY_SORT_DEFAULT_DIR[sort]
+        order = request.args.get("order", "").strip().lower()
+        if order not in ("asc", "desc"):
+            order = default_dir
+
+        per = request.args.get("per", 0, type=int)
+        if per not in PAGE_SIZES:
+            per = PAGE_SIZES[0]
+
         d = db()
+        total = d.count_policies(region=region, category=category, keyword=q,
+                                review_status=review, todo=todo)
+        # 总页数由**总数**算出，不再用"本页是否取满"倒推。
+        # 旧写法 `has_more = len(rows) == per` 在"总数恰好是每页整数倍"时
+        # 会在最后一页多给一个指向空页的"下一页"，点进去是空白列表。
+        pages = max(1, (total + per - 1) // per)
+        page_requested = max(request.args.get("page", 1, type=int), 1)
+        # 页码越界就地夹住：否则手改 page=99 或筛选后页码残留会看到一片空白，
+        # 而"库里其实有几百条"这件事完全看不出来。
+        # 一条都没有时不提示"超出范围"——那时候该说的是"没有匹配结果"。
+        page = min(page_requested, pages)
+        clamped = page_requested > pages and total > 0
+
         rows = d.query_policies(region=region, category=category, keyword=q,
-                                review_status=review, todo=todo, limit=per, offset=(page - 1) * per)
-        has_more = len(rows) == per
+                                review_status=review, todo=todo,
+                                limit=per, offset=(page - 1) * per, sort=sort, order=order)
         regions = sorted({r["region"] for r in d.query_policies(limit=2000) if r["region"]})
         # 把待办类型附到每行，列表里就能直接看出"这条该谁处理"
         for r in rows:
             r["todo"] = row_todo(r)
+
+        # 当前查询状态（不含 page）。页面里所有翻页/换排序/换每页条数的链接
+        # 都从它派生，于是**筛选与排序、页码与每页条数互不丢失**；
+        # 各写一套 href 是列表页最常见的退化点（改了搜索词翻页就丢排序）。
+        state = {"q": q, "region": region, "category": category, "review": review,
+                 "todo": todo, "sort": sort, "order": order, "per": per}
+        defaults = {"sort": "id", "order": POLICY_SORT_DEFAULT_DIR["id"], "per": PAGE_SIZES[0], "page": 1}
+        base = {k: v for k, v in state.items() if str(v) != str(defaults.get(k, ""))}
+
+        def qs(**overrides):
+            """在 base 之上换掉若干参数，生成可点的查询串；等于默认值的参数不写进地址。"""
+            merged = {**base, **{k: str(v) for k, v in overrides.items() if v is not None}}
+            for key, value in overrides.items():
+                if value is None:
+                    merged.pop(key, None)
+            merged = {k: v for k, v in merged.items() if str(v) != str(defaults.get(k, ""))}
+            return ("?" + urlencode(merged)) if merged else ""
+
         return render_template(
             "policies.html", rows=rows, q=q, category=category, region=region, review=review, todo=todo,
-            page=page, has_more=has_more, regions=regions, cat_codes=CAT_CODES, _cat_label=_cat_label,
+            page=page, pages=pages, total=total, per=per, page_sizes=PAGE_SIZES,
+            clamped=clamped, page_requested=page_requested,
+            sort=sort, order=order, sort_columns=POLICY_SORT_COLUMNS, sort_labels=POLICY_SORT_LABELS,
+            base=base, qs=qs, export_limit=EXPORT_LIMIT,
+            regions=regions, cat_codes=CAT_CODES, _cat_label=_cat_label,
+            review_labels=REVIEW_LABELS, review_styles=_REVIEW_STYLE,
             todo_meta=TODO_META, todo_order=TODO_ORDER,
+        )
+
+    @app.get("/policies/export.csv")
+    def policies_export():
+        """把**当前筛选与排序**的结果导成 CSV。
+
+        为什么要它：政策库是拿来用的资料，不是只在浏览器里看的。研究时要给同事
+        一份"浙江的准入类政策清单"，此前只能一条条复制。
+
+        三个细节是刻意的：
+          1) 带 UTF-8 BOM。Excel（Windows 中文版）读没有 BOM 的 UTF-8 会把中文
+             显示成乱码——政务材料在 Excel 里打开是常态，这个坑必踩。
+          2) 与列表页**共用同一套筛选与排序**（`Database._policy_filters` /
+             `policy_order_by`），所以"页面上筛出多少条，导出来就是多少条"，
+             不会出现导出比页面多几条、口径对不上。
+          3) 文件名保持 ASCII。中文文件名要按 RFC 5987 编码，各浏览器与
+             Excel 的处理并不一致，反而容易导出成乱码名，不值当。
+        """
+        q = request.args.get("q", "").strip()
+        region = request.args.get("region", "").strip()
+        category = request.args.get("category", "").strip()
+        review = request.args.get("review", "").strip()
+        todo = request.args.get("todo", "").strip()
+        sort = request.args.get("sort", "").strip()
+        if sort not in POLICY_SORTABLE:
+            sort = "id"
+        order = request.args.get("order", "").strip().lower()
+        if order not in ("asc", "desc"):
+            order = POLICY_SORT_DEFAULT_DIR[sort]
+
+        d = db()
+        rows = d.query_policies(region=region, category=category, keyword=q,
+                                review_status=review, todo=todo,
+                                limit=EXPORT_LIMIT, sort=sort, order=order)
+        buf = io.StringIO()
+        buf.write("\ufeff")
+        writer = csv.writer(buf)
+        writer.writerow(["ID", "标题", "文号", "类别", "地区", "发布日期",
+                         "复核状态", "待办类型", "责任方", "来源站点", "来源链接"])
+        for p in rows:
+            tt = p.get("todo_type") or "none"
+            meta = TODO_META.get(tt, (tt, "-", ""))
+            writer.writerow([
+                p.get("id", ""), p.get("title", ""), p.get("wenhao", ""),
+                p.get("category_names") or "未分类", p.get("region", ""),
+                (p.get("page_date") or "")[:10], REVIEW_LABELS.get(p.get("review_status"), ""),
+                "" if tt == "none" else meta[0], "" if tt == "none" else meta[1],
+                p.get("site", ""), p.get("page_url", ""),
+            ])
+        stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+        return Response(
+            buf.getvalue(), mimetype="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename=policies-{stamp}.csv"},
         )
 
     @app.route("/todos")
@@ -308,7 +445,17 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
     @app.route("/runs")
     def runs():
         d = db()
-        rows = d.list_runs(limit=50)
+        # 以前固定取最近 50 条、且没有翻页：一次"一键全国采集"就会留下 37 条记录，
+        # 跑两轮之后更早的批次在界面上等于不存在。这里补上与政策库同一套分页。
+        per = request.args.get("per", 0, type=int)
+        if per not in PAGE_SIZES:
+            per = PAGE_SIZES[0]
+        total = d.count_runs()
+        pages = max(1, (total + per - 1) // per)
+        page_requested = max(request.args.get("page", 1, type=int), 1)
+        page = min(page_requested, pages)
+        clamped = page_requested > pages and total > 0
+        rows = d.list_runs(limit=per, offset=(page - 1) * per)
         smap = {s["id"]: (s["site"] or s["name"]) for s in d.list_sources()}
         parsed = []
         for r in rows:
@@ -319,8 +466,21 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
                 r["summary_obj"] = {}
                 r["progress_obj"] = {}
             parsed.append(r)
-        running = _RUN_LOCK.locked() or any(r["status"] == "running" for r in rows)
-        return render_template("runs.html", rows=parsed, running=running, smap=smap)
+        # 是否还在跑要**全库判断**，不能只看当前这一页：换到第 2 页时，
+        # 正在运行的批次落在第 1 页，只看本页会让自动刷新悄悄停掉。
+        running = _RUN_LOCK.locked() or d.count_runs(status="running") > 0
+
+        def qs(**overrides):
+            merged = {k: str(v) for k, v in overrides.items() if v is not None}
+            merged = {k: v for k, v in merged.items() if v != str(PAGE_SIZES[0]) or k != "per"}
+            if merged.get("page") == "1":
+                merged.pop("page")
+            return ("?" + urlencode(merged)) if merged else ""
+
+        return render_template("runs.html", rows=parsed, running=running, smap=smap,
+                               page=page, pages=pages, total=total, per=per,
+                               page_sizes=PAGE_SIZES, clamped=clamped,
+                               page_requested=page_requested, qs=qs)
 
     @app.get('/runs/<run_id>')
     def run_detail(run_id):
