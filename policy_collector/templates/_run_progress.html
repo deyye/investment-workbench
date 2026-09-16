@@ -1,0 +1,10 @@
+{% set p=r.progress_obj %}{% set s=r.summary_obj %}
+<section class="panel agent-progress" aria-live="polite">
+<div class="panel-heading"><h2>{{ '正在处理' if r.status=='running' else '处理结果' }}</h2><span>{{ p.get('completed',0) }} / {{ p.get('total','待发现') }} 份</span></div>
+{% if p.get('total') %}<progress max="{{ p.total }}" value="{{ p.get('completed',0) }}" aria-label="文件处理进度"></progress>{% endif %}
+<p><strong>{{ p.get('message','查看本次采集结果') }}</strong></p>{% if r.status=='running' and p.get('title') %}<p class="hint">当前文件：{{ p.title }}</p>{% endif %}
+<div class="process-steps"><span>发现文件</span><span>获取材料</span><span>判断与校验</span><span>入库或转人工</span></div>
+<p>新增 {{ s.get('ingested',0) }} · 更新 {{ s.get('updated',0) }} · 重复 {{ s.get('duplicates',0) }} · 待复核 {{ s.get('need_review',0) }} · 处理失败 {{ s.get('failed',0) }}</p>
+<div class="form-actions"><a class="btn primary" href="{{ url_for('policies',review='pending') }}">处理待复核</a><a class="btn" href="{{ url_for('material_quality') }}">查看材料缺口</a><a class="text-link" href="{{ url_for('policies') }}">查看政策库</a></div>
+<p class="hint">进度仅代表本批文件处理数量；入库不等于人工确认，也不代表官网历史文件已采全。</p>
+</section>

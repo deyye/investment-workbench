@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import page_head %}
+{% block title %}处理过程 · 投资政策{% endblock %}
+{% block content %}
+<a href="{{ url_for('runs') }}">← 返回处理进度</a>
+{{ page_head('', (r.kind=='batch' and '一键全国采集') or source.get('site') or '样例处理', '每一步显示实际执行的动作和结果。') }}
+{% if r.kind=='batch' %}{% include '_batch_progress.html' %}{% else %}{% include '_run_progress.html' %}{% endif %}
+{% if r.status!='running' and r.summary_obj.get('failed') and source.get('name') %}<form method="post" action="{{ url_for('source_run',name=source.name) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="retry_only" value="1"><button class="btn">重试该来源失败文件</button><span class="hint">按正常批次上限处理，不重复采集来源列表。</span></form>{% endif %}
+{% if r.kind!='batch' %}<section class="panel agent-progress"><h2>处理时间线</h2><p class="hint">显示最近100步；原文、判断依据与人工意见保留在文件详情中。</p>
+<ol class="agent-timeline">{% for e in events %}<li><time>{{ e.created_at[11:] }}</time><span class="tag {{ 'warn' if e.status=='attention' else 'neutral' }}">{{ {'running':'执行中','done':'已完成','attention':'需关注'}.get(e.status,e.status) }}</span> {{ e.message }}</li>{% else %}<li>本次为旧记录，暂无步骤明细。</li>{% endfor %}</ol>
+{% if r.note %}<details><summary>采集范围与异常详情</summary><pre class="content">{{ r.note }}</pre></details>{% endif %}</section>{% endif %}
+{% endblock %}
+{% block script %}{% if running %}<script>setTimeout(()=>location.reload(),4000);</script>{% endif %}{% endblock %}

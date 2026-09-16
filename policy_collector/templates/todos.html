@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icon, page_head, empty %}
+{% block title %}待办清单 · 投资政策{% endblock %}
+{% block content %}
+{% call page_head('TODO / 该谁做什么', '待办清单', '按"谁能解决"分开——机器能修的、运维要配的、只有人能判的。不必都堆给你看。') %}
+<a class="btn" href="{{ url_for('policies') }}">{{ icon('file') }} 全部资料</a>
+{% endcall %}
+
+<div class="todo-grid">
+{% for c in todos.cells %}
+  <a class="todo-card {{ c.key }}" href="{{ url_for('policies', todo=c.key) }}">
+    <div class="todo-top"><span class="todo-name">{{ c.name }}</span><span class="todo-owner">{{ c.owner }}</span></div>
+    <div class="todo-value">{{ c.count }}<small>条</small></div>
+    <div class="todo-note">{{ c.note }}</div>
+    {% if c.sample %}<div class="todo-sample">例：{{ c.sample.title[:30] }}</div>{% else %}<div class="todo-sample todo-sample-none">这一类当前为空</div>{% endif %}
+  </a>
+{% endfor %}
+</div>
+
+<p class="todo-summary">
+  共 {{ todos.total }} 条在库里 ·
+  <strong>需要你逐条处理 {{ todos.human }} 条</strong>（结论待确认 + 待定口径）·
+  另可抽检 {{ todos.counts.get('candidate', 0) }} 条高置信候选 ·
+  机器自修 {{ todos.machine }} 条 · 运维处理 {{ todos.system }} 条 ·
+  另有 {{ todos.clear }} 条判定明确，无需人工
+</p>
+
+{% for key in todo_order %}
+{% set name, owner, note = todo_meta[key] %}
+<section class="panel todo-panel {{ key }}">
+  <div class="panel-heading">
+    <h2>{{ name }}<span class="todo-owner-inline">· {{ owner }}</span></h2>
+    <a class="text-link" href="{{ url_for('policies', todo=key) }}">全部 {{ todos.counts.get(key, 0) }} 条 {{ icon('arrow') }}</a>
+  </div>
+  <p class="hint">{{ note }}</p>
+  {% if lists[key] %}
+  <div class="policy-feed">
+  {% for p in lists[key] %}
+    <a class="feed-row" href="{{ url_for('policy_detail', pid=p.id) }}">
+      <span class="document-icon">{{ icon('file') }}</span>
+      <div class="feed-content">
+        <h3>{{ p.title }}</h3>
+        <p><span>{{ p.region or '地区未标注' }}</span><span>{{ p.wenhao or '文号未标注' }}</span><span>{{ (p.page_date or p.created_at or '')[:10] }}</span></p>
+        {% if p.reviewer_hint %}<p class="feed-why">原因：{{ p.reviewer_hint[:80] }}</p>{% endif %}
+      </div>
+      {{ icon('arrow') }}
+    </a>
+  {% endfor %}
+  </div>
+  {% else %}
+  {{ empty('这一类为空', '当前没有落在这一类的文件。', 'check' if key != 'review' else 'clock') }}
+  {% endif %}
+</section>
+{% endfor %}
+
+<section class="panel">
+  <div class="panel-heading"><h2>这几格是怎么定的</h2></div>
+  <ul class="region-hint">
+    <li><strong>高置信候选是"抽检"不是"逐条判"</strong>：规则判「收」且强判据达标——机器很确定，但**没有静默入库**。你抽检几条，翻转少数判错的即可；没看过之前它始终算待办。这一档由业务方 2026-09-14 裁定。</li>
+    <li><strong>结论待确认 / 待定口径才是要你逐条看的</strong>：前者是机器判不下去（多类混杂、命中边界样例），后者是相关性判不出来、要业务方定口径。</li>
+    <li><strong>材料待补和系统待修不该占你的时间</strong>：前者补齐附件后会自动重判，后者接口配好后会自动补判。这两格是给机器和运维看进度的。</li>
+    <li>待办类型由<strong>判定环节派生后落库</strong>（<code>policies.todo_type</code>，见 <code>policy_collector/todo.py</code>）；界面统计与列表过滤都读同一个字段，所以数字和条数一定对得上。</li>
+  </ul>
+</section>
+{% endblock %}

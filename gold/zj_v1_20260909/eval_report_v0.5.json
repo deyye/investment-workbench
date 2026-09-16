@@ -1,0 +1,802 @@
+{
+  "labeled": 56,
+  "labels": {
+    "total": 56,
+    "status": {
+      "ai_draft": 56
+    },
+    "human_reviewed": 0,
+    "snapshot_bound": 56
+  },
+  "material_readiness": [
+    {
+      "id": 2,
+      "database_id": 2,
+      "page_url": "https://fzggw.zj.gov.cn/col/col1229123351/art/2026/art_df23514f54b13049bd314a791d1facee.html",
+      "content_sha256": "6e1129c1b4c4f34786e0874f2b54aed267373990f6a0fe6d45fe7042fda8fff6",
+      "analysis_sha256": "812a7b1a52407ed63f747e76c2dd023e84d889e398761364e44f59617f3f507b",
+      "body_chars": 343,
+      "analysis_chars": 348,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 3,
+      "database_id": 3,
+      "page_url": "https://fzggw.zj.gov.cn/col/col1229123351/art/2026/art_8282044c7b1b469c82f5fd9d2c27a41d.html",
+      "content_sha256": "3c3efc5a531bb1a002182a5547e847b2d30f55f74103030bf2b6c247896d6411",
+      "analysis_sha256": "79c89f27bbc7b692af577b37ea32e50de3deb714af73be66b080227984d65472",
+      "body_chars": 1485,
+      "analysis_chars": 1490,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 5,
+      "database_id": 5,
+      "page_url": "https://fzggw.zj.gov.cn/col/col1229123351/art/2026/art_d262104677054e32b32bb46e5e7a4a24.html",
+      "content_sha256": "e154992516ea476463149b2f15a8690e12c51d3e0feb944874315f20e26bfbe6",
+      "analysis_sha256": "ec718c2bdb2c5e5d7275c260441edd523fcca4ea99bb3860117e6b93d7ba2944",
+      "body_chars": 363,
+      "analysis_chars": 368,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 6,
+      "database_id": 6,
+      "page_url": "https://fzggw.zj.gov.cn/col/col1229123351/art/2025/art_43281601268249b6a2b7c9715872f2c1.html",
+      "content_sha256": "85a3811731b36fead402f8353b7a8d4ec7c77fcbacfc501b9ca72eca836f4c1c",
+      "analysis_sha256": "ec918126e11e9fc113410375a4e25204c1b0600daddf92437a1d48f99d4b6e44",
+      "body_chars": 214,
+      "analysis_chars": 65423,
+      "attachments": 1,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 7,
+      "database_id": 7,
+      "page_url": "https://fzggw.zj.gov.cn/art/2025/11/4/art_1229123351_2578716.html",
+      "content_sha256": "7375a47ea033db2f4795807a7d6046c32ba820c18f8e4141385ca81be505dc54",
+      "analysis_sha256": "3931b0c4993c0a62040a234353135a1182b64985fa8f7c00e66da14d445b259d",
+      "body_chars": 333,
+      "analysis_chars": 13199,
+      "attachments": 4,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 10,
+      "database_id": 10,
+      "page_url": "https://fzggw.zj.gov.cn/art/2025/6/3/art_1229123351_2556123.html",
+      "content_sha256": "4fa6d635a461af4955c93b63353982e33826098d312e83975e8898181cd61a26",
+      "analysis_sha256": "e5cc5402dd690e49eadb08ce3c56bdddfb02fe6e6e4bccd9a88f23ea3aebfd6e",
+      "body_chars": 1363,
+      "analysis_chars": 1368,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 13,
+      "database_id": 13,
+      "page_url": "https://fzggw.zj.gov.cn/art/2025/2/14/art_1229123351_2545057.html",
+      "content_sha256": "ffdee21b1f5e9cc07e5d78bc46fc7ce7a4e1f528b6c5e9132e40199e929b37ae",
+      "analysis_sha256": "816099ac807c2892c6a45bc9548e96f4765604fdd022519911e28163b54e2aa6",
+      "body_chars": 1603,
+      "analysis_chars": 1608,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 15,
+      "database_id": 15,
+      "page_url": "https://fzggw.zj.gov.cn/art/2025/1/27/art_1229123351_2544446.html",
+      "content_sha256": "21c846bf6474afbba5395f621cd1c467262ddf0860b7cc47977ea3db0f865b41",
+      "analysis_sha256": "2375e82a83da6a51dae5754dc149ec53dc479a70a3d50a8cd7f3dd8d98a53100",
+      "body_chars": 5751,
+      "analysis_chars": 5756,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 17,
+      "database_id": 17,
+      "page_url": "https://fzggw.zj.gov.cn/art/2025/1/2/art_1229123351_2541909.html",
+      "content_sha256": "a5a80d7cd57f89bed757186a45bf5d3c711c00153528a36c3735f90c1ff3ae7b",
+      "analysis_sha256": "d9fd809d0353f74c80972ecc0945655cf2c62cecf23599dbe17aff06e4928508",
+      "body_chars": 425,
+      "analysis_chars": 430,
+      "attachments": 4,
+      "attachments_incomplete": 4
+    },
+    {
+      "id": 20,
+      "database_id": 20,
+      "page_url": "https://fzggw.zj.gov.cn/art/2024/9/23/art_1229123351_2529919.html",
+      "content_sha256": "28fce0ac03b72af06f132e78e5fda6d35a25af70ced5ff19035a2563a89bbbdf",
+      "analysis_sha256": "e2971907cae3edcd0f16a286cb3c3d3839798cc84549adbe02fb62d72cd61ea5",
+      "body_chars": 383,
+      "analysis_chars": 388,
+      "attachments": 2,
+      "attachments_incomplete": 2
+    },
+    {
+      "id": 22,
+      "database_id": 22,
+      "page_url": "https://fzggw.zj.gov.cn/art/2024/1/17/art_1229123351_2510442.html",
+      "content_sha256": "b2d193c93079ff388d8348dc68a25f76ed14fc478b7d02abea2529dbfe71ecc6",
+      "analysis_sha256": "383903ad8832177e043b5ffbc33e4a4834ca3a6384624656a762774e57494746",
+      "body_chars": 960,
+      "analysis_chars": 965,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 27,
+      "database_id": 27,
+      "page_url": "https://fzggw.zj.gov.cn/art/2023/10/25/art_1229123351_2494055.html",
+      "content_sha256": "c128200cda514c9b4cbd2729d2a33f8769c55e238df37e56477b47288bb36d83",
+      "analysis_sha256": "b5c53f97d1228cf78076e4e636973e5da92a2100676eae04138b4228c827145e",
+      "body_chars": 130,
+      "analysis_chars": 135,
+      "attachments": 2,
+      "attachments_incomplete": 2
+    },
+    {
+      "id": 28,
+      "database_id": 28,
+      "page_url": "https://fzggw.zj.gov.cn/art/2023/6/26/art_1229123351_2480886.html",
+      "content_sha256": "eee84ec3331ad6b8cdf85f46564cf4dea3b841a7a560f0d47a69b8398d19e420",
+      "analysis_sha256": "524f74614ddf7e0250bb142f365f7267f9c775793bb5b2c9a6335c0948db9ce2",
+      "body_chars": 1885,
+      "analysis_chars": 1890,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 31,
+      "database_id": 31,
+      "page_url": "https://fzggw.zj.gov.cn/art/2023/4/24/art_1229123351_2475359.html",
+      "content_sha256": "0ae5e332bd036d378d105fff522cdd15eb81f8620ab71dfb9cf7fe6b65742b3f",
+      "analysis_sha256": "3b5679e81d7fb3a9208385da9dfa37841d0fa4ccde22029627d1c2441c2b5ffe",
+      "body_chars": 252,
+      "analysis_chars": 257,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 32,
+      "database_id": 32,
+      "page_url": "https://fzggw.zj.gov.cn/art/2023/3/29/art_1229123351_2472224.html",
+      "content_sha256": "cb8861c38f60c809d0fa6f62fe3aa25c924b2ac1ee1313a43d2e4a83fa6bc780",
+      "analysis_sha256": "e2c8fc1d1ca63d69738c839752a59117c0b4f5b16f256e61d8ed260b106d5340",
+      "body_chars": 169,
+      "analysis_chars": 174,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 33,
+      "database_id": 33,
+      "page_url": "https://fzggw.zj.gov.cn/art/2023/3/7/art_1229123351_2469370.html",
+      "content_sha256": "263f4f7cb6ae084955b051f8fd708fbae0457cd6457c8974acf03d424224455b",
+      "analysis_sha256": "845160fdc1761697de8a3ec48dcea524af2e9b9cd01a5a47b053c62bbc1910fd",
+      "body_chars": 196,
+      "analysis_chars": 201,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 36,
+      "database_id": 36,
+      "page_url": "https://fzggw.zj.gov.cn/art/2023/1/29/art_1229123351_2455742.html",
+      "content_sha256": "d1162464264c75b1c92b06d8e1e8bd0be8b265fc1f4d8a25cdc011aa0f85c63f",
+      "analysis_sha256": "6df554694999742c668c0f256d56dada61f3ac035bbb66281d6dd6eae8978d58",
+      "body_chars": 142,
+      "analysis_chars": 147,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 43,
+      "database_id": 43,
+      "page_url": "https://fzggw.zj.gov.cn/art/2022/6/22/art_1229123351_2408703.html",
+      "content_sha256": "a9e39df12b05b9c2049afb90cce13d892050d97f923c4c6280b374779c07fc84",
+      "analysis_sha256": "d225ef86efdd64c538afdfb10bb1659c3a8b01b6b153f7435c2ae1d686a3d2df",
+      "body_chars": 3177,
+      "analysis_chars": 3182,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 45,
+      "database_id": 45,
+      "page_url": "https://fzggw.zj.gov.cn/art/2022/4/8/art_1229123351_2400433.html",
+      "content_sha256": "e3b2a9b8b697e9dbf40c0117cd275ee2887fce1d65a73d0ad90e996d7de1c899",
+      "analysis_sha256": "e874205cd3f197f6a05fc5b1d7b31dd68b4db641eb16792357458d92761fb4a1",
+      "body_chars": 8346,
+      "analysis_chars": 8351,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 46,
+      "database_id": 46,
+      "page_url": "https://fzggw.zj.gov.cn/art/2022/1/11/art_1229123351_2389156.html",
+      "content_sha256": "6ea508c8a9cd1789963661dcffbf95c43e7af5722fd39d85e30fab60b7921774",
+      "analysis_sha256": "08c1cbeae1a47a18830f8b908a2d380c18c5565d2e02c5677b2d3ad8443be0fd",
+      "body_chars": 333,
+      "analysis_chars": 338,
+      "attachments": 3,
+      "attachments_incomplete": 3
+    },
+    {
+      "id": 50,
+      "database_id": 50,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/11/9/art_1229123351_2372518.html",
+      "content_sha256": "45121a31b8a5b90247fcc58a3ed99fbf78cff05408b7fe822c9f32d1e2909012",
+      "analysis_sha256": "e3034077a37456b4433eecf69ca02db6cb978175afb97cfba0146bfed3463f6c",
+      "body_chars": 3364,
+      "analysis_chars": 3369,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 57,
+      "database_id": 57,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/9/16/art_1229123351_2360485.html",
+      "content_sha256": "d9d27de733113b4f481991b82aa7cf045eadafa23e0992e538a25c052f086614",
+      "analysis_sha256": "8832eefddcce845ea21227016aa7314c5f6fa661640e117efc1ba8a665a65132",
+      "body_chars": 2904,
+      "analysis_chars": 2909,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 65,
+      "database_id": 65,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/9/16/art_1229123351_2360388.html",
+      "content_sha256": "46ca66ebe5d54076e3fb90bd797062125ff3c839cc4983f2ec771ab3a9e531a4",
+      "analysis_sha256": "d4b8a02345de5a0a6a1c005e6162fe22b061bcd3f061a72d82fac585b06a415c",
+      "body_chars": 1409,
+      "analysis_chars": 1414,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 68,
+      "database_id": 68,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/9/16/art_1229123351_2360375.html",
+      "content_sha256": "33d06cbce2344442b5249e67dc45a1d73be74f633f60e24903cc59313e4c5e4e",
+      "analysis_sha256": "588c40f789b2f002451924bb140ffc5d089833d171bcab1a7ae994bc7f7c19fc",
+      "body_chars": 310,
+      "analysis_chars": 315,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 72,
+      "database_id": 72,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/9/16/art_1229123351_2360347.html",
+      "content_sha256": "2fc14efb959cbcef8a8e684e1ce7942e60494a60c47eba4b5357788c2a7d43ad",
+      "analysis_sha256": "de80293d13a84af4d60a23e77258a9520c52f1ffc148942e78a57ff01404407c",
+      "body_chars": 728,
+      "analysis_chars": 733,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 76,
+      "database_id": 76,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/9/16/art_1229123351_2360318.html",
+      "content_sha256": "dff746604c1e55878e712405fb441575d13f03335e993b4fa1962243e5d11e1f",
+      "analysis_sha256": "8ff74d515863b0776eddfbc9ac79d48f8a347c558f690b75c7a8702fde24a531",
+      "body_chars": 84,
+      "analysis_chars": 89,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 80,
+      "database_id": 80,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/9/10/art_1229123351_2355019.html",
+      "content_sha256": "2056b50851e40341d3a63ec76a5d37e602b8bcf38612ccbeab8216a47055c994",
+      "analysis_sha256": "e260c1c6e12002163299cf8a50054fc04ab9e55c055e07e90c043b2a289f88af",
+      "body_chars": 146,
+      "analysis_chars": 3555,
+      "attachments": 1,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 86,
+      "database_id": 86,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/9/1/art_1229123351_2348251.html",
+      "content_sha256": "70d92093d446f40c4cc81111203a083da5163921bc5ff15955a81dfb3daec258",
+      "analysis_sha256": "79a2c34a54c9513875828b0074ecaf996da9943ada146a442469bbffaa91194d",
+      "body_chars": 1451,
+      "analysis_chars": 1740,
+      "attachments": 1,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 90,
+      "database_id": 90,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/1/19/art_1229123351_2227351.html",
+      "content_sha256": "17a929a11ca062246a79629b39521821f9477a723f7f6ea1fa29595db0313541",
+      "analysis_sha256": "4925641e7fddc2c1065c7040be8edb1261c54d3137eac48de636d5f0dcec8408",
+      "body_chars": 6637,
+      "analysis_chars": 6642,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 91,
+      "database_id": 91,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/1/19/art_1229123351_2227204.html",
+      "content_sha256": "760bb8e14ca8457ec57b7687bae212d5b72b1143f31b12777fea739f7892cdaa",
+      "analysis_sha256": "0ee2b303283f3e4a76f6120ba9be297ab059d70a99e33380ddca9e066aa49baa",
+      "body_chars": 6271,
+      "analysis_chars": 6276,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 93,
+      "database_id": 93,
+      "page_url": "https://fzggw.zj.gov.cn/art/2021/1/18/art_1229123351_2227126.html",
+      "content_sha256": "234bd5b4ba29efaed547856bbdc94edff1010461abbe5f42df7b3a66318ed63f",
+      "analysis_sha256": "db063af9b51178a63452d27399363ed28443970413275ad0101e35aa96685d10",
+      "body_chars": 9290,
+      "analysis_chars": 9295,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 98,
+      "database_id": 98,
+      "page_url": "https://fzggw.zj.gov.cn/art/2020/10/9/art_1229123351_1762189.html",
+      "content_sha256": "760dbd59c6047e8d6320b0d14b8d4fdd5078d35a50264848d2e67f8399585ab0",
+      "analysis_sha256": "55417093a5df3795fd5a8f74ac445514f65b88329abb3f286f629cdd3520ff79",
+      "body_chars": 495,
+      "analysis_chars": 500,
+      "attachments": 2,
+      "attachments_incomplete": 2
+    },
+    {
+      "id": 99,
+      "database_id": 99,
+      "page_url": "https://fzggw.zj.gov.cn/art/2020/9/23/art_1229123351_1544067.html",
+      "content_sha256": "539f4037a1d5785f3d409764e23b14d876a9f3ea7d271255950d0b1a0a648c18",
+      "analysis_sha256": "0bd677290b3372e491cf0cc20906598311b02eadb31528404de2b41b76c04fc7",
+      "body_chars": 3683,
+      "analysis_chars": 3688,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 100,
+      "database_id": 100,
+      "page_url": "https://fzggw.zj.gov.cn/art/2020/9/18/art_1229123351_1514488.html",
+      "content_sha256": "ca2f10c62a28aed0333375d0628001e11282572385eb83c6201e2f9a2fadd157",
+      "analysis_sha256": "f08a72fd8b07ae4adf414aea7e7402c6ce966adf0b5eeaf6752f8208d6224bf6",
+      "body_chars": 296,
+      "analysis_chars": 301,
+      "attachments": 4,
+      "attachments_incomplete": 4
+    },
+    {
+      "id": 105,
+      "database_id": 105,
+      "page_url": "https://fzggw.zj.gov.cn/art/2020/6/16/art_1229123351_581241.html",
+      "content_sha256": "10c7566ab92da98066ec2135077dabe06403f512d68335232685ff1464a1ba2e",
+      "analysis_sha256": "e140106a86a97023022cdf7a2abea63aa58cf9589b850809742c57307fd07991",
+      "body_chars": 4081,
+      "analysis_chars": 4086,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 110,
+      "database_id": 110,
+      "page_url": "https://fzggw.zj.gov.cn/art/2020/2/10/art_1229123351_581235.html",
+      "content_sha256": "0bf20999f46a644573e12ef59db3813a1ff640196b59daabdd7b78638f43afd3",
+      "analysis_sha256": "ea6e4586537669832bdcef29cbc2fd65db62df01c8dacc7d72bb484f75e96965",
+      "body_chars": 2312,
+      "analysis_chars": 2317,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 118,
+      "database_id": 118,
+      "page_url": "https://fzggw.zj.gov.cn/art/2019/7/23/art_1229123351_581212.html",
+      "content_sha256": "5ff5c64f1d355f2aa25976241aaff04c046cc80fa168a14dd706776f7a33d7e1",
+      "analysis_sha256": "16ee60e3d52c4faa6d5aa2840d03bdc9626107eaabfe49038ce1cf4f1b74e59c",
+      "body_chars": 4739,
+      "analysis_chars": 4744,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 128,
+      "database_id": 128,
+      "page_url": "https://fzggw.zj.gov.cn/art/2018/11/7/art_1229123351_581196.html",
+      "content_sha256": "6f466baa8229b59ec247b4872c06573f87c2304f9f55258d3e898dacaf4e3228",
+      "analysis_sha256": "6ab14535a7d984a5c0870882b73aca21f6fba33a47ed63db80a15532d4eddc95",
+      "body_chars": 1211,
+      "analysis_chars": 1216,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 131,
+      "database_id": 131,
+      "page_url": "https://fzggw.zj.gov.cn/art/2018/10/29/art_1229123351_581193.html",
+      "content_sha256": "a7046da808643e555c781be7dba722f4b52cd11e2c3b220800828f6f851d8bae",
+      "analysis_sha256": "082161806b2b401d10420217a530c6d6d820fb18f2e9b54cfb35775a713e6bc7",
+      "body_chars": 3943,
+      "analysis_chars": 3948,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 151,
+      "database_id": 151,
+      "page_url": "https://fzggw.zj.gov.cn/art/2018/7/31/art_1229123351_580847.html",
+      "content_sha256": "b012268dc2a222e8f54baa8aaf55d005a204363d479ada0f8b0ffce9c274006c",
+      "analysis_sha256": "2b4c384768c86440c622cd6d075ede0a7e249ca3a3fcb47de014e0b2da9b2b84",
+      "body_chars": 420,
+      "analysis_chars": 425,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 161,
+      "database_id": 161,
+      "page_url": "https://fzggw.zj.gov.cn/art/2018/2/2/art_1229123351_581144.html",
+      "content_sha256": "3c17b39f1a58c7f1aa2cc80ab7b4418b8bd640a969986aaa5ea6f6c68322577f",
+      "analysis_sha256": "4050369e235cee9527b2e9671a75432ae66d7fe0276ca0c83d60f7b853793884",
+      "body_chars": 5289,
+      "analysis_chars": 5294,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 163,
+      "database_id": 163,
+      "page_url": "https://fzggw.zj.gov.cn/art/2018/1/30/art_1229123351_581141.html",
+      "content_sha256": "b36d1f87fef46b47e9d37566eeaaff7bac831860531f805e23e9c1e5f39ac783",
+      "analysis_sha256": "9033058e44ff8c5225e4cb2b2e344b02a129b2bacf62ac74f54a34d35b33fa49",
+      "body_chars": 2376,
+      "analysis_chars": 2381,
+      "attachments": 4,
+      "attachments_incomplete": 4
+    },
+    {
+      "id": 178,
+      "database_id": 178,
+      "page_url": "https://fzggw.zj.gov.cn/art/2017/4/28/art_1229123351_581098.html",
+      "content_sha256": "8e7f730de5a20f2d1df9b3fb8148b10765346b5024c8008b06be9451470aeca4",
+      "analysis_sha256": "e0c559f6c09fce134f4aea038d75811a1eeb71a8ec748fbaeaee80a2a5a15696",
+      "body_chars": 7142,
+      "analysis_chars": 7147,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 192,
+      "database_id": 192,
+      "page_url": "https://fzggw.zj.gov.cn/art/2016/11/21/art_1229123351_581072.html",
+      "content_sha256": "36cd15b477775adf5821a0aab14ed60fa3d5d010ed635667205727158d713907",
+      "analysis_sha256": "80ad450fecdac1b025a1a20f1ebd5bf014f58c59a05d0c9d5153583c5f9c1693",
+      "body_chars": 2731,
+      "analysis_chars": 2736,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 203,
+      "database_id": 203,
+      "page_url": "https://fzggw.zj.gov.cn/art/2016/5/5/art_1229123351_581050.html",
+      "content_sha256": "4d4517734fdcae73bbb5f7e6756e49a4d63c5d844c750b00da9bf081e2ea624a",
+      "analysis_sha256": "d2d3295cfdf7ad4f670050a0cfd02e581a6efca8af7d92e37c820fbd08e33274",
+      "body_chars": 329,
+      "analysis_chars": 334,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 207,
+      "database_id": 207,
+      "page_url": "https://fzggw.zj.gov.cn/art/2016/2/4/art_1229123351_581043.html",
+      "content_sha256": "e60ce5365a7c9f9929666b4c5dbd4479740babff42cfc86a755b5be1bf108bb6",
+      "analysis_sha256": "fdfbbc577358919e78d3cc9804be82c5b17a708891cec1ccaf99990d709001c8",
+      "body_chars": 3721,
+      "analysis_chars": 3726,
+      "attachments": 2,
+      "attachments_incomplete": 2
+    },
+    {
+      "id": 219,
+      "database_id": 219,
+      "page_url": "https://fzggw.zj.gov.cn/art/2015/6/3/art_1229123351_580995.html",
+      "content_sha256": "eb03c9dcb6613e4d2027e931d03c8f0c3e3f75419b5e9c74302ed02be092ebd6",
+      "analysis_sha256": "eae93b40edf5041b313b74e13637705be3f18b849a501c2fc61d1295045695e4",
+      "body_chars": 443,
+      "analysis_chars": 448,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 223,
+      "database_id": 223,
+      "page_url": "https://fzggw.zj.gov.cn/art/2015/4/17/art_1229123351_580989.html",
+      "content_sha256": "f32472a13b565b1a73f6ef24a0062f0b009bc47de41baf360e4b2d95b1a45610",
+      "analysis_sha256": "e1b5ac4471a0ae6b150a57d1a7684b039648bc071e253686c4318fc5422232cd",
+      "body_chars": 1431,
+      "analysis_chars": 1436,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 240,
+      "database_id": 240,
+      "page_url": "https://fzggw.zj.gov.cn/art/2014/3/18/art_1229123351_580859.html",
+      "content_sha256": "7764c853ae0abd1cef83987c8951710ad53d9169d7d40014cc4ef910f8504e15",
+      "analysis_sha256": "1329ae026da49ecb851a46998730cd18dc918420eb8c92472a573aa3e2e3a291",
+      "body_chars": 2198,
+      "analysis_chars": 2203,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 242,
+      "database_id": 242,
+      "page_url": "https://fzggw.zj.gov.cn/art/2014/1/13/art_1229123351_580843.html",
+      "content_sha256": "eee8a68f298dee0adc4a1db57eba2295ffe6b48ca8de6fe0cdbb10bcc7bd4fb7",
+      "analysis_sha256": "d94a4793364b4ae40db07836a078197bdffe60ce4c6cec420c5638c4ca8bc39c",
+      "body_chars": 1832,
+      "analysis_chars": 1837,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 256,
+      "database_id": 256,
+      "page_url": "https://fzggw.zj.gov.cn/art/2012/7/6/art_1229123351_580647.html",
+      "content_sha256": "3f2fc4b18241cbade33be74971424df5d3579d9fbb81891aab15e01792d7a8cc",
+      "analysis_sha256": "8a013703c9326a2be7f744299cb2db79c8477ebbd09fc01fba353233e6d98c59",
+      "body_chars": 550,
+      "analysis_chars": 555,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 270,
+      "database_id": 270,
+      "page_url": "https://fzggw.zj.gov.cn/art/2010/10/20/art_1229123351_580140.html",
+      "content_sha256": "e3d5a4fe675595bf4a75705505e0948b4524eb479a1e5b5c34a3a1872edf3f0e",
+      "analysis_sha256": "09df4abea898d30a61d71e48a514740ddbb349e35aa3cff1badf8ce04ff4b274",
+      "body_chars": 1149,
+      "analysis_chars": 1154,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 276,
+      "database_id": 276,
+      "page_url": "https://fzggw.zj.gov.cn/art/2010/3/29/art_1229123351_580302.html",
+      "content_sha256": "3daf1e764018ee3872354b347358dc08a50872ff6cabf52428276a6441f0cc28",
+      "analysis_sha256": "afd825e774cde8afa9925a115ee97149cf4de5741e7712bd11b824cd2a3fdd34",
+      "body_chars": 464,
+      "analysis_chars": 469,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 283,
+      "database_id": 283,
+      "page_url": "https://fzggw.zj.gov.cn/art/2009/10/14/art_1229123351_580277.html",
+      "content_sha256": "5c11b3ef3716dff34a95f9cee53c3bd5193269be2971e0bb05a6d3adf8037ca5",
+      "analysis_sha256": "a0bdfedcddde6d18e67acd12c2eccfdb33608f5b80724dcfc4969624879e38fe",
+      "body_chars": 2200,
+      "analysis_chars": 2205,
+      "attachments": 1,
+      "attachments_incomplete": 1
+    },
+    {
+      "id": 289,
+      "database_id": 289,
+      "page_url": "https://fzggw.zj.gov.cn/art/2009/5/6/art_1229123351_580256.html",
+      "content_sha256": "188810ed2c97d480f2d76bf4b0c419fa89ea2d8d4b8f3d257bd970757ebe96b4",
+      "analysis_sha256": "984173785494164cab7758511ba659ef4473907a91628a6c2f6fbce07de237b4",
+      "body_chars": 5630,
+      "analysis_chars": 5635,
+      "attachments": 0,
+      "attachments_incomplete": 0
+    },
+    {
+      "id": 306,
+      "database_id": 306,
+      "page_url": "https://fzggw.zj.gov.cn/art/2005/3/28/art_1229123351_580516.html",
+      "content_sha256": "97e2be738d6fd4a87e4c82c529f07331b89c4612d0bcdb75b311b347a20455a3",
+      "analysis_sha256": "0926361c3d915e7c4601efa5464e7765746f453900a7d9e3d999fea5e2e93786",
+      "body_chars": 208,
+      "analysis_chars": 11164,
+      "attachments": 1,
+      "attachments_incomplete": 0
+    }
+  ],
+  "stored_predictions": {
+    "labeled_records": 56,
+    "relevance_precision": 0.619,
+    "relevance_recall": 0.7027,
+    "relevance_f1": 0.6582,
+    "category_micro_precision": 0.3733,
+    "category_micro_recall": 0.5714,
+    "category_micro_f1": 0.4516,
+    "exact_match": 0.0893,
+    "confusion": {
+      "tp": 26,
+      "fp": 16,
+      "fn_including_pending": 11,
+      "tn": 0
+    },
+    "per_category": {
+      "guide": {
+        "tp": 6,
+        "fp": 2,
+        "fn": 6
+      },
+      "access": {
+        "tp": 11,
+        "fp": 15,
+        "fn": 7
+      },
+      "guarantee": {
+        "tp": 4,
+        "fp": 8,
+        "fn": 6
+      },
+      "incentive": {
+        "tp": 7,
+        "fp": 22,
+        "fn": 2
+      }
+    },
+    "pending": 14,
+    "rule_fallback": 0,
+    "need_review": 56,
+    "input_truncated": 0,
+    "decision_coverage": 0.75,
+    "labels": {
+      "total": 56,
+      "status": {
+        "ai_draft": 56
+      },
+      "human_reviewed": 0,
+      "snapshot_bound": 56
+    },
+    "scope": "仅标注的已入库候选；pending 不计正确，相关样本 pending 计漏判；不衡量官网发现或被排除文件召回率"
+  },
+  "rule_baseline": {
+    "labeled_records": 56,
+    "relevance_precision": 0.619,
+    "relevance_recall": 0.7027,
+    "relevance_f1": 0.6582,
+    "category_micro_precision": 0.3733,
+    "category_micro_recall": 0.5714,
+    "category_micro_f1": 0.4516,
+    "exact_match": 0.0893,
+    "confusion": {
+      "tp": 26,
+      "fp": 16,
+      "fn_including_pending": 11,
+      "tn": 0
+    },
+    "per_category": {
+      "guide": {
+        "tp": 6,
+        "fp": 2,
+        "fn": 6
+      },
+      "access": {
+        "tp": 11,
+        "fp": 15,
+        "fn": 7
+      },
+      "guarantee": {
+        "tp": 4,
+        "fp": 8,
+        "fn": 6
+      },
+      "incentive": {
+        "tp": 7,
+        "fp": 22,
+        "fn": 2
+      }
+    },
+    "pending": 14,
+    "rule_fallback": 0,
+    "need_review": 56,
+    "input_truncated": 0,
+    "decision_coverage": 0.75,
+    "labels": {
+      "total": 56,
+      "status": {
+        "ai_draft": 56
+      },
+      "human_reviewed": 0,
+      "snapshot_bound": 56
+    },
+    "scope": "仅标注的已入库候选；pending 不计正确，相关样本 pending 计漏判；不衡量官网发现或被排除文件召回率"
+  },
+  "dry_run": false,
+  "llm": {
+    "labeled_records": 56,
+    "relevance_precision": 0.9062,
+    "relevance_recall": 0.7838,
+    "relevance_f1": 0.8406,
+    "category_micro_precision": 0.5397,
+    "category_micro_recall": 0.6939,
+    "category_micro_f1": 0.6071,
+    "exact_match": 0.375,
+    "confusion": {
+      "tp": 29,
+      "fp": 3,
+      "fn_including_pending": 8,
+      "tn": 6
+    },
+    "per_category": {
+      "guide": {
+        "tp": 10,
+        "fp": 3,
+        "fn": 2
+      },
+      "access": {
+        "tp": 12,
+        "fp": 6,
+        "fn": 6
+      },
+      "guarantee": {
+        "tp": 6,
+        "fp": 7,
+        "fn": 4
+      },
+      "incentive": {
+        "tp": 6,
+        "fp": 13,
+        "fn": 3
+      }
+    },
+    "pending": 17,
+    "rule_fallback": 0,
+    "need_review": 43,
+    "input_truncated": 0,
+    "decision_coverage": 0.6964,
+    "labels": {
+      "total": 56,
+      "status": {
+        "ai_draft": 56
+      },
+      "human_reviewed": 0,
+      "snapshot_bound": 56
+    },
+    "scope": "仅标注的已入库候选；pending 不计正确，相关样本 pending 计漏判；不衡量官网发现或被排除文件召回率"
+  },
+  "llm_reclassify": {
+    "llm_classified": 56,
+    "fallback": 0,
+    "failed": 0,
+    "not_attempted": 0,
+    "input_tokens": 193697,
+    "output_tokens": 119297
+  },
+  "run_complete": true,
+  "evaluation_status": "exploratory",
+  "model": "deepseek-v4-flash",
+  "gold_sha256": "db490160a62c07ddf5e3551212d5ba4f63f5548f3d5cb608329786e8a0cafd33",
+  "rules_sha256": "5979693e0ec85ef0012c67e537d1f43c2dbba05364ee15eb2e927a76868dd9ee",
+  "prompt_sha256": "404d37a12b76ba3ce32d426ca87d9eda32ff3d4a9dd29a985e4051b6870e0d2c",
+  "chunk_chars": 10000,
+  "max_chunks": 24
+}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import page_head,empty,status %}
+{% block title %}处理进度 · 投资政策{% endblock %}
+{% block content %}
+{{ page_head('', '处理进度', '先看正在处理什么，再处理需要你确认的文件。') }}
+{% if running %}<p class="flash warn" role="status">任务处理中，每4秒更新一次。可离开此页，任务会继续。</p>{% endif %}
+{% if rows %}
+{% set r=rows[0] %}{% include '_run_progress.html' %}
+<section class="panel"><div class="panel-heading"><h2>最近批次</h2><a href="{{ url_for('sources') }}">开始采集</a></div>
+<div class="table-scroll"><table class="list"><thead><tr><th>来源</th><th>状态</th><th>开始时间</th><th>新增 / 更新</th><th>待复核</th><th></th></tr></thead><tbody>
+{% for r in rows %}<tr><td>{{ '全国批次' if r.kind=='batch' else smap.get(r.source_id,'样例') }}</td><td>{{ status(r.status) }}</td><td>{{ (r.started_at or '')[:16] }}</td><td>{{ r.summary_obj.get('ingested',0) }} / {{ r.summary_obj.get('updated',0) }}</td><td>{{ r.summary_obj.get('need_review',0) }}</td><td><a href="{{ url_for('run_detail',run_id=r.run_id) }}">{{ '查看各省结果' if r.kind=='batch' else '查看过程' }}</a></td></tr>{% endfor %}
+</tbody></table></div></section>
+{% else %}{{ empty('暂无任务','选择官网来源，开始采集。','activity') }}{% endif %}
+{% endblock %}
+{% block script %}{% if running %}<script>setTimeout(()=>location.reload(),4000);</script>{% endif %}{% endblock %}

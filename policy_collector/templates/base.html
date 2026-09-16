@@ -1,0 +1,33 @@
+{% from '_ui.html' import icon %}
+{% set page_names = {'index':'工作总览','policies':'政策资料库','policy_detail':'政策详情','todos':'待办清单','provinces':'省份浏览','sources':'采集来源','runs':'处理进度','run_detail':'处理过程','model_settings':'模型配置','material_quality':'材料质量','maintenance':'数据维护'} %}
+<!DOCTYPE html><html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#132d4c">
+<title>{% block title %}投资项目政策归集系统{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head><body>
+<a class="skip-link" href="#main-content">跳至主要内容</a>
+<aside class="sidebar" aria-label="主导航">
+<a class="brand" href="{{ url_for('index') }}"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span><strong>投资政策</strong><small>智能归集 · 研究工作台</small></span></a>
+<nav class="side-nav"><a class="nav-item" href="/">统一工作台</a><a class="nav-item" href="/approval/">审批文件结构化 ↗</a></nav><div class="nav-caption">工作空间 <span>WORKSPACE</span></div>
+<nav class="side-nav">
+{% for endpoint, name, glyph in [('index','工作总览','grid'),('todos','待办清单','check'),('policies','政策资料库','file'),('provinces','省份浏览','flag'),('sources','采集来源','globe'),('runs','处理进度','activity'),('material_quality','材料质量','shield'),('model_settings','模型配置','model'),('maintenance','数据维护','folder')] %}
+{% set active = request.endpoint == endpoint or (endpoint == 'policies' and request.endpoint == 'policy_detail') or (endpoint == 'runs' and request.endpoint == 'run_detail') %}
+<a href="{{ url_for(endpoint) }}" class="nav-item {{ 'active' if active else '' }}" {% if active %}aria-current="page"{% endif %}>{{ icon(glyph) }}<span>{{ name }}</span>{% if active %}<span class="nav-indicator"></span>{% endif %}</a>
+{% endfor %}
+</nav>
+<div class="sidebar-note"><span class="note-line"></span><p>政策有源<br>研判有据</p><small>让政策信息更好服务投资研究</small></div>
+<div class="sidebar-foot">{{ icon('layers') }}<span>投资项目政策归集系统<small>研究验证版</small></span></div>
+</aside>
+<div class="workspace">
+<header class="workspace-bar"><div class="breadcrumb">研究工作台<span>/</span><strong>{{ page_names.get(request.endpoint,'工作空间') }}</strong></div><div class="bar-meta"><time id="today"></time><span class="edition">研究验证版</span></div></header>
+<main id="main-content">
+{% if preview_mode %}<div class="preview-banner">界面预览 · 当前为隔离演示数据，非实际采集成果</div>{% endif %}
+{% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}" role="status">{{ m }}</div>{% endfor %}{% endwith %}
+{% block content %}{% endblock %}
+</main>
+<footer class="foot"><span>投资项目政策归集系统</span><span>资料可追溯<span class="footer-sep">·</span>判断需复核</span></footer>
+</div>
+<script>document.getElementById('today').textContent = new Intl.DateTimeFormat('zh-CN', {year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date());</script>
+{% block script %}{% endblock %}
+</body></html>

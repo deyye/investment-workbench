@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from '_ui.html' import icon, page_head, empty %}
+{% block title %}采集来源 - 投资政策工作台{% endblock %}
+{% block content %}
+{% call page_head('COLLECTION / 来源管理', '采集来源', '归集国家、浙江及外省政策文件，让政策信息持续更新。') %}<a class="btn" href="{{ url_for('runs') }}">{{ icon('activity') }} 查看运行记录</a>{% endcall %}
+<div class="notice">{{ icon('globe') }}<div><h3>从政府官网，归集政策原文</h3><p>可直接「一键全国采集」依次跑完所有已启用来源，也可在下方针对单个来源单独采集。{% if model_ready %}当前使用大模型，Agent按材料状态选择处理动作。{% elif model_enabled %}已启用大模型但未读到密钥，采集会自动回落到本地规则，可在「模型配置」中检查。{% else %}大模型已停用，采集使用本地规则、不产生模型费用；可在「模型配置」中启用。{% endif %}</p></div></div>
+<section class="panel">
+<div class="batch-actions">
+<form method="post" action="{{ url_for('source_run_all') }}">
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<div><h2>一键全国采集</h2><p class="hint">按顺序跑完全部已启用来源（{{ rows|selectattr('enabled')|list|length }} 个）。某一站失败不会中断后面的省份，失败来源会在批次结果里标出。</p></div>
+<select name="prefer" aria-label="全国采集分类方式">{% if model_enabled %}<option value="llm">自动处理（推荐）</option>{% endif %}<option value="rule">仅用本地规则{% if not model_enabled %}（大模型已停用）{% endif %}</option></select>
+<button class="btn primary" type="submit">{{ icon('globe') }} 开始全国采集</button>
+</form>
+</div>
+<div class="table-caption"><h2>政策来源目录</h2><span>{{ rows|length }} 个已登记来源 · 启用状态不代表采集成功</span></div>
+{% if rows %}<div class="table-scroll" role="region" aria-label="采集来源列表，可横向滚动" tabindex="0"><table class="list wide source-table">
+<thead><tr><th>站点与栏目</th><th>地区</th><th>接入状态</th><th>最近检查</th><th>采集操作</th></tr></thead>
+<tbody>{% for s in rows %}<tr>
+<td><strong class="source-name">{{ s.site }}</strong><div class="source-column">{{ s.category }}</div><a class="source-url" href="{{ s.list_url }}" target="_blank" rel="noopener">查看政策栏目 {{ icon('link') }}</a>
+{% if s.note or s.last_error %}<details class="source-note"><summary>接入说明{% if s.last_error %} · 有异常{% endif %}</summary><p>{{ s.note }}</p>{% if s.last_error %}<p class="source-error">{{ s.last_error }}</p>{% endif %}<p class="mono dim">{{ s.name }}</p></details>{% endif %}</td>
+<td>{{ s.region or '—' }}</td><td>{% if s.enabled %}<span class="tag ok">已启用</span>{% else %}<span class="tag neutral">未启用</span>{% endif %}{% if not s.in_config %}<span class="tag warn">未纳入配置</span>{% endif %}</td>
+<td class="meta">{{ (s.last_checked_at or '')[:16] or '尚未检查' }}</td>
+<td>{% if s.in_config and s.enabled %}<form class="source-actions" method="post" action="{{ url_for('source_run', name=s.name) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><select name="prefer" aria-label="{{ s.site }}分类方式">{% if model_enabled %}<option value="llm">自动处理（推荐）</option>{% endif %}<option value="rule">仅用本地规则{% if not model_enabled %}（大模型已停用）{% endif %}</option></select><button class="btn primary sm" type="submit">开始采集</button></form>{% else %}<span class="dim">暂不可运行</span>{% endif %}</td>
+</tr>{% endfor %}</tbody></table></div>
+{% else %}{{ empty('尚未登记采集来源', '请检查来源配置后重新启动工作台。', 'globe') }}{% endif %}</section>
+<p class="hint below-panel">每次采集依次完成文件发现、下载解析、分类与去重入库。实际采集质量请结合运行记录和文件复核结果判断。</p>
+{% endblock %}

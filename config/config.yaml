@@ -1,0 +1,34 @@
+# 政策文件归集系统 - 运行配置示例
+# 数据库与落盘目录在运行时由 cli 参数指定，默认见 policy_collector/config.py
+
+# ---------- 数据目录 ----------
+data_dir: ./data                 # 相对项目根目录；放 policy.db 与 downloads/
+downloads_dir: ./data/downloads  # 网页与附件原件落盘目录
+
+# ---------- 模型服务（可选，分类用 LLM；未配置时回退规则分类） ----------
+llm:
+  enabled: true                  # false 则只用规则分类
+  provider: openai_compatible    # 预留：openai_compatible / dashscope 等
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1" # 百炼北京兼容地址，可改控制台业务空间地址
+  api_key_env: "DASHSCOPE_API_KEY"     # 从环境变量读取，不在配置中写明文
+  model: "qwen-plus"             # 默认真实模型；LLM_MODEL 环境变量可覆盖
+  enable_thinking: false         # 非流式 JSON 分类使用非思考模式
+  chunk_chars: 10000              # 正文与附件分段处理
+  max_chunks: 24                  # 超限明确标记未读完、待复核
+  timeout_seconds: 60
+  retries: 2
+
+# ---------- 定时任务（schedule 子命令用） ----------
+schedule:
+  default_interval_minutes: 60   # 默认每 60 分钟运行一次增量采集
+  timezone: "Asia/Shanghai"
+
+# ---------- 采集通用行为 ----------
+fetch:
+  timeout_seconds: 15
+  retries: 2                     # 失败重试次数
+  retry_backoff_seconds: 2
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+  max_page_bytes: 20971520       # 单页最大下载 20MB
+  verify_ssl: true
+  request_interval_seconds: 0.5

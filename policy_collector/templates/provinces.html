@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icon, page_head, empty %}
+{% block title %}按省份浏览 · 投资政策{% endblock %}
+{% block content %}
+{% call page_head('REGIONS / 地区分布', '按省份浏览', '按地区查看已归集的政策文件，避免全部混在一个列表里。') %}
+<a class="btn" href="{{ url_for('policies') }}">{{ icon('file') }} 全部资料</a>
+{% endcall %}
+
+{% set CATS = [('guide','引导类'),('access','准入类'),('guarantee','保障类'),('incentive','激励约束类')] %}
+
+<div class="metrics-grid region-metrics">
+  <div class="metric"><div class="metric-top"><span>覆盖地区</span><span class="metric-icon">{{ icon('globe') }}</span></div><div class="metric-value">{{ local_count }}<span>个</span></div><div class="metric-sub">已归集政策的省级地区</div></div>
+  <div class="metric"><div class="metric-top"><span>地方政策</span><span class="metric-icon">{{ icon('file') }}</span></div><div class="metric-value">{{ local_total }}<span>份</span></div><div class="metric-sub">不含中央与样例</div></div>
+</div>
+
+{% if central %}
+<div class="section-heading"><h2>中央层面</h2><span>国家发展改革委 · 中国政府网</span></div>
+<div class="province-grid province-grid-wide">
+{% for r in central %}
+  <a class="province-card province-card-central" href="{{ url_for('policies', region=r.region) }}">
+    <div class="province-top"><h3>{{ r.region }}</h3><span class="province-total">{{ r.total }}<small>份</small></span></div>
+    <div class="province-cats">
+      {% for code, name in CATS %}<span class="province-cat c-{{ code }}"><b>{{ r[code] or 0 }}</b>{{ name[:2] }}</span>{% endfor %}
+    </div>
+    <div class="province-foot">
+      {% if r.todo %}<span class="tag warn">待复核 {{ r.todo }}</span>{% else %}<span class="tag ok">无需处理</span>{% endif %}
+      <span class="province-date">{{ (r.latest_date or '')[:10] }}</span>
+    </div>
+  </a>
+{% endfor %}
+</div>
+{% endif %}
+
+<div class="section-heading"><h2>省级层面</h2><span>按政策数量排序 · 点击进入该地区资料</span></div>
+{% if local %}
+<div class="province-grid">
+{% for r in local %}
+  <a class="province-card" href="{{ url_for('policies', region=r.region) }}">
+    <div class="province-top"><h3>{{ r.region }}</h3><span class="province-total">{{ r.total }}<small>份</small></span></div>
+    <div class="province-cats">
+      {% for code, name in CATS %}<span class="province-cat c-{{ code }}"><b>{{ r[code] or 0 }}</b>{{ name[:2] }}</span>{% endfor %}
+    </div>
+    <div class="province-foot">
+      {% if r.todo %}<span class="tag warn">待复核 {{ r.todo }}</span>{% else %}<span class="tag ok">无需处理</span>{% endif %}
+      <span class="province-date">{{ (r.latest_date or '')[:10] }}</span>
+    </div>
+  </a>
+{% endfor %}
+</div>
+{% else %}
+{{ empty('尚未归集地方政策','前往采集来源，接通各省栏目后这里会按地区显示分布。','globe') }}
+{% endif %}
+
+{% if samples or unlabeled %}
+<div class="section-heading"><h2>其他</h2><span>样例数据与未标注地区</span></div>
+<div class="province-grid">
+{% for r in samples + unlabeled %}
+  <a class="province-card province-card-muted" href="{{ url_for('policies', region=r.region) }}">
+    <div class="province-top"><h3>{{ r.region or '未标注地区' }}</h3><span class="province-total">{{ r.total }}<small>份</small></span></div>
+    <div class="province-foot"><span class="province-date">{{ (r.latest_date or '')[:10] }}</span></div>
+  </a>
+{% endfor %}
+</div>
+{% endif %}
+
+<section class="panel">
+  <div class="panel-heading"><h2>怎么用这一页</h2></div>
+  <ol class="region-hint">
+    <li>卡片上的数字是<strong>该地区已归集的当前有效条目</strong>，不含被剔除的。</li>
+    <li>四个小标签是任务书要求的四类（引导/准入/保障/激励约束）在该地区的分布。<strong>一份文件可同时归入多类，所以四个数字之和可能大于该地区总数</strong>——这是多标签的正常结果，不是算错。</li>
+    <li>某类长期为 0，通常是该省这类政策还没接通来源，也可能是分类结果尚待复核。</li>
+    <li>点卡片进入该地区资料列表，可再叠加分类、复核状态筛选。</li>
+  </ol>
+</section>
+{% endblock %}

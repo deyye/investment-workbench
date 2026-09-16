@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icon, page_head, empty, status %}
+{% block title %}工作总览 · 投资政策{% endblock %}
+{% block content %}
+{% call page_head('OVERVIEW / 工作空间', '工作总览', '汇集政策资料，掌握采集进展，有序开展投资政策研究。') %}<a class="btn primary" href="{{ url_for('sources') }}">{{ icon('globe') }} 开始采集</a>{% endcall %}<section class="panel agent-progress"><h2>今天先做什么？</h2><div class="form-actions"><a class="btn primary" href="{{ url_for('sources') }}">1. 采集文件</a><a class="btn" href="{{ url_for('runs') }}">2. 查看处理进度</a><a class="btn" href="{{ url_for('todos') }}">3. 处理待办清单</a></div>
+<form method="post" action="{{ url_for('source_run_all') }}" class="inline-run"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="prefer" value="llm"><button class="btn" type="submit">{{ icon('globe') }} 一键全国采集（{{ stats.sources_enabled }} 个来源）</button><span class="hint">按来源依次采集，可离开此页；某一站失败不中断整批。</span></form>
+<p class="hint">系统自动检查材料、判断政策并留存依据。需要你处理的内容会进入待复核或材料缺口列表。</p></section>
+<div class="metrics-grid">
+{% for value,label,glyph,sub in [(stats.policies,'政策记录','file','当前版本 · 含待办'),(todos.human,'需你处理','check','要你逐条判的；抽检与机器/运维的活不计入'),(stats.sources_enabled,'启用来源','globe','已配置来源共 ' ~ stats.sources ~ ' 个'),(stats.runs,'累计运行批次','activity','采集任务运行记录')] %}
+<div class="metric {{ 'attention' if loop.index==2 else '' }}"><div class="metric-top"><span>{{ label }}</span><span class="metric-icon">{{ icon(glyph) }}</span></div><div class="metric-value">{{ value }}<span>{{ '个' if loop.index==3 else '批' if loop.index==4 else '份' }}</span></div><div class="metric-sub">{{ sub }}</div></div>
+{% endfor %}
+</div>
+{% if todos %}
+<div class="section-heading"><h2>待办清单</h2><a class="text-link" href="{{ url_for('todos') }}">按谁能解决分开看 {{ icon('arrow') }}</a></div>
+<div class="todo-grid">
+{% for c in todos.cells %}
+  <a class="todo-card {{ c.key }}" href="{{ url_for('policies', todo=c.key) }}">
+    <div class="todo-top"><span class="todo-name">{{ c.name }}</span><span class="todo-owner">{{ c.owner }}</span></div>
+    <div class="todo-value">{{ c.count }}<small>条</small></div>
+    <div class="todo-note">{{ c.note }}</div>
+  </a>
+{% endfor %}
+</div>
+<p class="todo-summary">共 {{ todos.total }} 条在库 · 另有 {{ todos.clear }} 条判定明确无需人工。规则判正且证据强的会进「高置信候选」供抽检——不会静默入库；换成模型模式可直接确认。</p>
+{% endif %}
+<div class="section-heading"><h2>政策分类导航</h2><span>按政策作用查阅资料</span></div>
+<div class="category-grid">
+{% for name,question,description,glyph,code in [('引导类','往哪投','发展规划 · 产业方向','flag','guide'),('准入类','让不让投','项目审批 · 准入条件','shield','access'),('保障类','靠什么投','土地资金 · 要素保障','layers','guarantee'),('激励约束类','投了怎样','奖补支持 · 监管评价','trend','incentive')] %}
+<a class="category-card {{ code }}" href="{{ url_for('policies',category=name) }}"><span class="category-icon">{{ icon(glyph) }}</span><div><h3>{{ name }}<span>{{ question }}</span></h3><p>{{ description }}</p></div>{{ icon('arrow','category-arrow') }}</a>
+{% endfor %}
+</div>
+{% if regions %}
+<div class="section-heading"><h2>按地区浏览</h2><a class="text-link" href="{{ url_for('provinces') }}">全部地区 {{ icon('arrow') }}</a></div>
+<div class="region-strip">
+{% for r in regions[:14] %}
+<a class="region-chip" href="{{ url_for('policies', region=r.region) }}"><span class="region-name">{{ r.region }}</span><span class="region-count">{{ r.total }}</span></a>
+{% endfor %}
+{% if regions|length > 14 %}<a class="region-chip region-chip-more" href="{{ url_for('provinces') }}">其余 {{ regions|length - 14 }} 个地区 {{ icon('arrow') }}</a>{% endif %}
+</div>
+{% endif %}
+<div class="dashboard-columns">
+<section class="panel latest-panel"><div class="panel-heading"><h2>最近入库</h2><a class="text-link" href="{{ url_for('policies') }}">全部资料 {{ icon('arrow') }}</a></div>
+{% if recent %}<div class="policy-feed">{% for p in recent %}<a class="feed-row" href="{{ url_for('policy_detail',pid=p.id) }}"><span class="document-icon">{{ icon('file') }}</span><div class="feed-content"><h3>{{ p.title }}</h3><p><span>{{ p.region or '地区未标注' }}</span><span>{{ p.wenhao or '文号未标注' }}</span><span>{{ (p.page_date or p.created_at or '')[:10] }}</span></p></div>{% if p.need_review %}<span class="tag warn">待复核</span>{% else %}<span class="tag ok">{{ '人工确认' if p.review_status in ['confirmed','adjusted'] else '自动通过' }}</span>{% endif %}</a>{% endfor %}</div>
+{% else %}{{ empty('政策资料库待充实','前往采集来源，选择官网栏目开始归集政策文件。') }}{% endif %}
+</section>
+<div class="dashboard-aside"><section class="review-callout"><div class="callout-top">{{ icon('check') }}<span>人工复核工作区</span></div><h3>让资料更准确<br>让判断有依据</h3><p>核对政策原文、分类依据及附件完整性。</p><a class="btn" href="{{ url_for('todos') }}">处理待办 <span>{{ todos.human }}</span>{{ icon('arrow') }}</a></section>
+<section class="panel"><div class="panel-heading"><h2>最近运行</h2><a class="text-link" href="{{ url_for('runs') }}">查看全部</a></div>{% if runs %}<div class="run-feed">{% for r in runs %}<div class="run-item"><span class="timeline-dot {{ r.status }}"></span><div>{{ status(r.status) }}<p>{{ {'manual':'手动采集','scheduled':'定时采集','batch':'全国采集','demo':'样例演示'}.get(r.kind,r.kind) }}<span>{{ (r.started_at or '')[:16] }}</span></p></div></div>{% endfor %}</div>{% else %}{{ empty('暂无运行记录','采集开始后可在这里查看进展。','activity') }}{% endif %}</section>
+</div></div>
+<div class="overview-strip"><div>{{ icon('folder') }}<span>累计采集记录</span><strong>{{ stats.fetches }}</strong></div><div>{{ icon('link') }}<span>登记附件</span><strong>{{ stats.attachments }}</strong></div><p>已入库不等于已确认，请结合复核状态使用资料。</p></div>
+{% endblock %}

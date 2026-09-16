@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}政策库 - 政策文件归集系统{% endblock %}
+{% from '_ui.html' import icon, page_head, empty %}
+{% block content %}
+{{ page_head('POLICY LIBRARY / 资料管理', '政策资料库', '按地区、类别和复核状态查找政策，保留每份文件的来源与判断依据。') }}
+
+
+<section class="panel filter-panel"><form class="filter" method="get">
+  <label class="search-field">{{ icon("search") }}<input aria-label="政策关键词" type="search" name="q" value="{{ q }}" placeholder="搜索标题、文号、正文或附件内容"></label>
+  <select aria-label="地区" name="region">
+    <option value="">全部地区</option>
+    {% for r in regions %}<option value="{{ r }}" {% if r == region %}selected{% endif %}>{{ r }}</option>{% endfor %}
+  </select>
+  <select aria-label="政策分类" name="category">
+    <option value="">全部类别</option>
+    {% for code, name in cat_codes.items() %}
+      <option value="{{ name }}" {% if name == category %}selected{% endif %}>{{ name }}</option>
+    {% endfor %}
+  </select>
+  <select aria-label="待办类型" name="todo">
+    <option value="">全部待办</option>
+    {% for key in todo_order %}<option value="{{ key }}" {% if key == todo %}selected{% endif %}>{{ todo_meta[key][0] }} · {{ todo_meta[key][1] }}</option>{% endfor %}
+    <option value="none" {% if todo == 'none' %}selected{% endif %}>无需处理</option>
+  </select>
+  <select aria-label="复核状态" name="review">
+    <option value="">全部状态</option>
+    <option value="pending" {% if review == 'pending' %}selected{% endif %}>待复核</option>
+    <option value="confirmed_auto" {% if review == 'confirmed_auto' %}selected{% endif %}>模型自动通过</option>
+    <option value="confirmed" {% if review == 'confirmed' %}selected{% endif %}>人工确认</option>
+    <option value="adjusted" {% if review == 'adjusted' %}selected{% endif %}>已调整</option>
+    <option value="rejected" {% if review == 'rejected' %}selected{% endif %}>已剔除</option>
+  </select>
+  <button class="btn primary" type="submit">查询</button>
+  <a class="btn" href="{{ url_for('policies') }}">清空</a>
+</form></section>
+
+<section class="panel">
+<div class="table-caption"><h2>政策文件</h2><span>当前页 {{ rows|length }} 条 · 点击标题查看原文与复核依据</span></div>
+{% if rows %}
+<div class="table-scroll" role="region" aria-label="政策列表，可横向滚动" tabindex="0"><table class="list wide">
+  <thead><tr><th>ID</th><th>标题</th><th>文号</th><th>类别</th><th>地区</th><th>日期</th><th>状态 / 待办</th></tr></thead>
+  <tbody>
+  {% for p in rows %}
+    <tr>
+      <td class="id">#{{ p.id }}<span class="dim">v{{ p.version }}</span></td>
+      <td class="tt"><a href="{{ url_for('policy_detail', pid=p.id) }}">{{ p.title }}</a>{% if p.matched_attachment %}<div class="hint">命中附件：{{ p.matched_attachment }}<br>{{ p.attachment_excerpt }}</div>{% endif %}</td>
+      <td class="mono">{{ p.wenhao or '-' }}</td>
+      <td>{{ p.category_names or '未分类' }}</td>
+      <td>{{ p.region or '-' }}</td>
+      <td class="meta">{{ (p.page_date or '')[:10] or '-' }}</td>
+      <td>
+        {% if p.todo_type in todo_names %}
+          <span class="tag {{ 'warn' if p.todo_type in ['review','scope'] else 'ok' }}">{{ todo_names[p.todo_type] }}</span><span class="dim">{{ todo_owners[p.todo_type] }}</span>
+        {% elif p.review_status == 'rejected' %}<span class="tag bad">已剔除</span>
+        {% else %}<span class="tag ok">{{ {'confirmed':'人工确认','confirmed_auto':'模型通过','adjusted':'已调整'}.get(p.review_status, p.review_status) }}</span>
+        {% endif %}
+        {% if p.todo and p.todo != 'none' %}<span class="todo-chip {{ p.todo }}">{{ todo_meta[p.todo][0] }} · {{ todo_meta[p.todo][1] }}</span>{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+<div class="pager">
+  {% if page > 1 %}<a class="btn" href="{{ url_for('policies', q=q, region=region, category=category, review=review, todo=todo, page=page-1) }}">上一页</a>{% endif %}
+  <span class="pg">第 {{ page }} 页</span>
+  {% if has_more %}<a class="btn" href="{{ url_for('policies', q=q, region=region, category=category, review=review, todo=todo, page=page+1) }}">下一页</a>{% endif %}
+</div>
+{% else %}
+{{ empty("未找到匹配的政策", "试着减少筛选条件，或前往采集来源归集新的政策文件。", "search") }}
+{% endif %}
+</section>
+{% endblock %}

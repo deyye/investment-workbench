@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icon, page_head %}
+{% block title %}模型配置 - 投资政策工作台{% endblock %}
+{% block content %}
+{{ page_head('MODEL SERVICE / 智能支撑', '模型配置', '接入主流大模型服务，并在需要时一键启用或停用。停用后采集一律使用本地规则。') }}
+{% set cur = (providers | selectattr('name', 'equalto', state.provider) | first) or providers[0] %}
+
+<section class="panel model-state">
+<span class="dot {{ 'on' if state.ready else ('' if not state.enabled else 'idle') }}" aria-hidden="true"></span>
+<div class="model-state-text">
+<h2>{{ '大模型已启用' if state.enabled else '大模型未启用' }}{% if state.enabled and state.model %} · <span class="mono">{{ state.model }}</span>{% endif %}</h2>
+<p>{% if state.ready %}采集与政策判定使用该模型，会产生模型调用费用。{% elif state.enabled %}已启用，但密钥或模型名还不完整，实际采集仍走本地规则——请补全下方配置。{% else %}采集不调用模型、不产生费用，判断结果由本地规则给出后交人工确认。{% endif %}</p>
+</div>
+<form method="post" class="model-state-toggle"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<input type="hidden" name="action" value="toggle"><input type="hidden" name="enabled" value="{{ '0' if state.enabled else '1' }}">
+<button class="btn {{ '' if state.enabled else 'primary' }}">{{ icon('model') }} {{ '停用大模型' if state.enabled else '启用大模型' }}</button>
+</form>
+</section>
+
+<div class="model-kv">
+<div>当前服务<strong>{{ state.provider_label }}{% if state.local_service %}（本机）{% endif %}</strong></div>
+<div>接口地址<strong class="mono">{{ state.base_url or '尚未配置' }}</strong></div>
+<div>模型名称<strong class="mono">{{ state.model or '尚未配置' }}</strong></div>
+<div>密钥状态<strong>{% if state.has_key %}{{ state.key_source_label }}{% if state.key_source == 'file' %}（不回显）{% endif %}{% else %}未配置{% endif %}</strong></div>
+</div>
+
+{% if state.key_source and state.key_source.startswith('env:') %}
+<div class="flash warn" role="status">当前密钥来自<b>环境变量 {{ state.key_source[4:] }}</b>，它优先于本页填写的密钥。<b>在本页修改密钥不会生效</b>，除非先清除该环境变量。</div>
+{% endif %}
+{% if state.key_source == 'dotenv' %}
+<div class="flash warn" role="status">当前密钥来自项目目录的 <b>.env</b> 文件。在下方保存配置后，将以本页为准（shell 里 export 的环境变量仍然优先）。</div>
+{% endif %}
+{% if not state.has_key and state.enabled %}
+<div class="flash warn" role="status">已启用大模型但未读到密钥：采集时无法调用模型，会自动回落到本地规则。</div>
+{% endif %}
+{% if state.env_overrides %}
+<div class="flash warn" role="status">检测到环境变量 {{ state.env_overrides | join('、') }} 正在覆盖本页配置，界面显示的是覆盖后的值。</div>
+{% endif %}
+
+<div class="settings-layout">
+<section class="panel"><div class="panel-heading"><h2>服务连接配置</h2><span class="tag {{ 'ok' if state.has_key else 'neutral' }}">{{ '已保存密钥' if state.has_key else '密钥未配置' }}</span></div>
+<form method="post" class="settings-form"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="save">
+<div class="form-grid">
+<label class="form-field full">服务类型<select name="provider" id="provider-select">{% for p in providers %}<option value="{{ p.name }}" {% if p.name == state.provider %}selected{% endif %}>{{ p.label }}</option>{% endfor %}</select><small id="provider-note">{{ cur.note }}</small></label>
+<label class="form-field full">服务地址 <span class="dim">Base URL</span><input name="base_url" id="field-base-url" value="{{ state.base_url or cur.base_url }}" placeholder="https://…"><small>选择服务类型会自动带出地址；请填实际服务地址，不要带密钥与查询参数。</small></label>
+<label class="form-field full">模型名称<input name="model" id="field-model" value="{{ state.model or cur.model }}" placeholder="例如 deepseek-chat"><small>各家模型清单随账号变化：先用下方「连接检查」确认，报 HTTP 400/404 时改成账号可用的模型名。</small></label>
+<label class="form-field full">访问密钥 <span class="dim">API Key</span><input type="password" name="api_key" autocomplete="new-password" placeholder="{{ '已保存，留空即保留原密钥' if state.has_key and state.key_source == 'file' else '粘贴该服务控制台生成的密钥' }}"><small id="key-hint">{% if state.local_service %}本机服务无需密钥，可留空。{% else %}密钥只保存在本机数据目录，页面不回显；留空则保留同地址已保存的密钥。{% endif %}</small></label>
+<label class="form-field full">密钥环境变量 <span class="dim">选填</span><input name="api_key_env" id="field-env" value="{{ state.api_key_env }}" placeholder="留空采用该服务的通用名称"><small>环境变量优先于本页密钥；用环境变量管理密钥时，这里填变量名即可。</small></label>
+</div><div class="form-actions"><button class="btn primary">{{ icon('check') }} 保存配置</button><span class="hint">保存不会改变启用状态；启用或停用请用上方按钮</span></div></form></section>
+
+<aside class="settings-aside"><section class="panel"><div class="panel-heading"><h2>接入步骤</h2></div><div class="settings-steps">
+<div class="settings-step"><span>01</span><div><h3>选择服务</h3><p>从下拉框选一家，地址与模型名会自动填好；请用单位许可的服务。</p></div></div>
+<div class="settings-step"><span>02</span><div><h3>粘贴密钥并保存</h3><p>密钥只落本机数据目录，界面不回显。</p></div></div>
+<div class="settings-step"><span>03</span><div><h3>检查连接</h3><p>发送一条最小请求。通过后点「启用大模型」。</p></div></div>
+<div class="settings-step"><span>04</span><div><h3>随时可停用</h3><p>停用即回到本地规则，不产生任何模型费用。</p></div></div></div></section>
+<section class="panel settings-check"><div class="config-status">{{ icon('model') }}<h3>连接检查</h3></div><p class="hint">检查会发送一条最小请求，产生极少量模型调用费用；停用时不会发出请求。</p><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="check"><button class="btn">检查已保存配置的连接 {{ icon('arrow') }}</button></form>
+{% if result %}<div class="flash {{ 'ok' if result.ok else 'warn' }}" role="status">{{ '连接成功' if result.ok else '连接未成功' }}{% if result.model %} · {{ result.model }}{% endif %}{% if result.error %} · {{ result.error }}{% endif %}</div>{% endif %}</section></aside></div>
+{% endblock %}
+
+{% block script %}
+<script>
+const PROVIDERS = {{ providers | tojson }};
+const sel = document.getElementById('provider-select');
+if (sel) sel.addEventListener('change', () => {
+  const p = PROVIDERS.find(x => x.name === sel.value);
+  if (!p) return;
+  document.getElementById('field-base-url').value = p.base_url;
+  document.getElementById('field-model').value = p.model;
+  document.getElementById('field-env').value = p.api_key_env;
+  document.getElementById('provider-note').textContent = p.note;
+  document.getElementById('key-hint').textContent = p.local
+    ? '本机服务无需密钥，可留空。'
+    : '云端服务需填写密钥；留空则保留同地址已保存的密钥。';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{
+  "documents": 6,
+  "fixed_fields": {
+    "correct": 84,
+    "total": 84,
+    "accuracy": 1.0
+  },
+  "evidence_page_recall": {
+    "correct": 84,
+    "total": 84,
+    "recall": 1.0
+  },
+  "construction_metrics": {
+    "true_positive": 12,
+    "predicted": 12,
+    "expected": 12,
+    "precision": 1.0,
+    "recall": 1.0
+  },
+  "manual_review_fields": 6,
+  "seconds_per_document": [
+    0.246,
+    0.214,
+    0.207,
+    0.204,
+    0.204,
+    0.205
+  ],
+  "sample_sha256": {
+    "演示文体中心项目-项目建议书.pdf": "8ae96710b6a813df3eafd8404861b27bca60392be6e16f5057e914b8e66acf62",
+    "演示文体中心项目-可行性研究报告.pdf": "73d3063078052ef82bb205bb7fbd2c32f51f1d2222aa6e6d1e8ca4e2624dc3d1",
+    "演示文体中心项目-初步设计.pdf": "e23ed5921263938ea8e29701b0008bf4f568e0502e1145c7dd392bd3cec57a09",
+    "演示连接线工程项目-项目建议书.pdf": "2db30b6471fa413c33825026a3b5905ca49a83c27546e34b8ea58887a1251d96",
+    "演示连接线工程项目-可行性研究报告.pdf": "16a782c916fcaa94a4ea45b79878fc2bc6a45974238f478078a8967db6cb291a",
+    "演示连接线工程项目-初步设计.pdf": "3d987e106fc16c3eac7259688e7d28166a8aa83a07a6d7b1354d79a95326a27b"
+  },
+  "failures": [],
+  "scope": "仅两个虚构演示项目的14项字段与主要建设内容数量指标，不能代表真实业务准确率。",
+  "limitations": [
+    "开发样例回归，不代表未见文档泛化准确率",
+    "页码命中不等于文字框像素级准确率；图像高亮另行浏览器核对",
+    "本地印章候选仍需要人工或视觉模型确认"
+  ]
+}

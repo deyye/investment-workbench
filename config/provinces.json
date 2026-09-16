@@ -1,0 +1,157 @@
+[
+  {
+    "region": "北京市",
+    "home_url": "http://fgw.beijing.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "天津市",
+    "home_url": "http://fzgg.tj.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "河北省",
+    "home_url": "http://hbdrc.hebei.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "山西省",
+    "home_url": "http://fgw.shanxi.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "内蒙古自治区",
+    "home_url": "http://fgw.nmg.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "辽宁省",
+    "home_url": "http://fgw.ln.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "吉林省",
+    "home_url": "http://jldrc.jl.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "黑龙江省",
+    "home_url": "http://drc.hlj.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "上海市",
+    "home_url": "http://fgw.sh.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "江苏省",
+    "home_url": "http://fzggw.jiangsu.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "浙江省",
+    "home_url": "http://fzggw.zj.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "安徽省",
+    "home_url": "http://fzggw.ah.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "福建省",
+    "home_url": "http://fgw.fujian.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "江西省",
+    "home_url": "http://drc.jiangxi.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "山东省",
+    "home_url": "http://fgw.shandong.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "河南省",
+    "home_url": "http://fgw.henan.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "湖北省",
+    "home_url": "http://fgw.hubei.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "湖南省",
+    "home_url": "http://fgw.hunan.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "广东省",
+    "home_url": "http://drc.gd.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "广西壮族自治区",
+    "home_url": "http://fgw.gxzf.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "海南省",
+    "home_url": "http://plan.hainan.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "重庆市",
+    "home_url": "http://fzggw.cq.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "四川省",
+    "home_url": "http://fgw.sc.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "贵州省",
+    "home_url": "http://fgw.guizhou.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "云南省",
+    "home_url": "https://yndrc.yn.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "西藏自治区",
+    "home_url": "http://drc.xizang.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "陕西省",
+    "home_url": "http://sndrc.shaanxi.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "甘肃省",
+    "home_url": "http://fzgg.gansu.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "青海省",
+    "home_url": "http://fgw.qinghai.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "宁夏回族自治区",
+    "home_url": "http://fzggw.nx.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  },
+  {
+    "region": "新疆维吾尔自治区",
+    "home_url": "http://xjdrc.xinjiang.gov.cn/",
+    "evidence_url": "https://www.ndrc.gov.cn/"
+  }
+]

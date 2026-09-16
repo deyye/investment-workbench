@@ -1,0 +1,29 @@
+{% macro icon(name, cls='') -%}
+<svg class="icon {{ cls }}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if name == 'grid' %}<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+{% elif name == 'file' %}<path d="M14 2H5a1 1 0 0 0-1 1v18a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V8z"/><path d="M14 2v6h6M8 12h8M8 16h6"/>
+{% elif name == 'globe' %}<circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/>
+{% elif name == 'activity' %}<path d="M3 12h4l3-8 4 16 3-8h4"/>
+{% elif name == 'model' %}<rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"/><path d="m10 13 2-3 2 3"/>
+{% elif name == 'check' %}<path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="10"/>
+{% elif name == 'arrow' %}<path d="M4 12h16m-6-6 6 6-6 6"/>
+{% elif name == 'search' %}<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>
+{% elif name == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+{% elif name == 'layers' %}<path d="m12 3 10 5-10 5L2 8zM2 12l10 5 10-5M2 16l10 5 10-5"/>
+{% elif name == 'shield' %}<path d="m12 2 8 4v6c0 5-8 10-8 10S4 17 4 12V6z"/><path d="m8 12 3 3 5-6"/>
+{% elif name == 'folder' %}<path d="M3 7V5h6l2 2h10v13H3z"/><path d="M3 10h18"/>
+{% elif name == 'link' %}<path d="m9 15 6-6m-8 5-2 2a3 3 0 0 0 4 4l4-4a3 3 0 0 0 0-4m4-2 2-2a3 3 0 0 0-4-4l-4 4a3 3 0 0 0 0 4"/>
+{% elif name == 'flag' %}<path d="M5 22V3m0 1c5-4 9 4 14 0v10c-5 4-9-4-14 0"/>
+{% elif name == 'trend' %}<path d="M3 20h18M5 16l5-6 4 3 6-8m-6 0h6v6"/>
+{% endif %}</svg>
+{%- endmacro %}
+
+{% macro page_head(eyebrow, title, description) -%}
+<div class="page-heading"><div><div class="eyebrow">{{ eyebrow }}</div><h1>{{ title }}</h1><p>{{ description }}</p></div>{% if caller is defined %}<div class="heading-action">{{ caller() }}</div>{% endif %}</div>
+{%- endmacro %}
+
+{% macro empty(title, description, kind='folder') -%}
+<div class="empty-state"><span class="empty-icon">{{ icon(kind) }}</span><h3>{{ title }}</h3><p>{{ description }}</p></div>
+{%- endmacro %}
+
+{% macro status(value) -%}<span class="status-pill {{ value }}"><i></i>{{ {'ok':'已完成','partial':'部分完成','failed':'运行失败','running':'运行中'}.get(value,value) }}</span>{%- endmacro %}

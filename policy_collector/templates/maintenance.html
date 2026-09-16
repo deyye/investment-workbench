@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% from '_ui.html' import icon, page_head %}
+{% block title %}数据维护 - 投资政策工作台{% endblock %}
+{% block content %}
+{{ page_head('MAINTENANCE / 数据维护', '数据维护', '清空本机归集库以便重新采集。每次清空前都会自动备份，来源配置与模型密钥不受影响。') }}
+
+{% set LIB = [('policies','政策正文与判定结果'),('attachments','附件记录'),
+              ('policy_sources','政策与来源的关联'),('review_events','人工复核留痕'),
+              ('attachment_attempts','附件下载与解析尝试')] %}
+{% set LOGS = [('run_logs','采集批次记录'),('agent_events','逐份处理过程与阶段')] %}
+{% set KEEP = [('source_configs','来源配置'),('fetch_records','采集台账（重采要用）'),
+               ('discovery_observations','列表中各 URL 的采纳判定')] %}
+{% set counts = stats.counts %}
+{% set n_library = namespace(v=0) %}{% for t, _ in LIB %}{% set n_library.v = n_library.v + counts.get(t, 0) %}{% endfor %}
+{% set n_logs = namespace(v=0) %}{% for t, _ in LOGS %}{% set n_logs.v = n_logs.v + counts.get(t, 0) %}{% endfor %}
+
+{% if running %}<div class="flash warn" role="status">采集任务正在运行，本页清空按钮已锁定——请等它跑完再操作，避免把正在写入的记录清掉。</div>{% endif %}
+
+<section class="panel">
+<div class="panel-heading"><h2>本机库内数据</h2><span class="dim">库文件 {{ (stats.db_bytes / 1048576)|round(1) }} MB</span></div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="库内数据一览"><table class="list">
+<thead><tr><th>数据</th><th>表</th><th>条数</th><th>清空时</th></tr></thead><tbody>
+{% for t, name in LIB %}<tr><td>{{ name }}</td><td class="mono">{{ t }}</td><td>{{ counts.get(t, 0) }}</td><td>随「清空政策库」一并清掉</td></tr>{% endfor %}
+{% for t, name in LOGS %}<tr><td>{{ name }}</td><td class="mono">{{ t }}</td><td>{{ counts.get(t, 0) }}</td><td>随「清空运行日志」清掉</td></tr>{% endfor %}
+{% for t, name in KEEP %}<tr><td>{{ name }}</td><td class="mono">{{ t }}</td><td>{{ counts.get(t, 0) }}</td><td><span class="tag ok">始终保留</span></td></tr>{% endfor %}
+</tbody></table></div>
+<p class="hint">保留「来源配置」是有意的：它是配置而非数据，清掉就得把 34 个来源重新配一遍。模型密钥存在 <span class="mono">data/llm.local.json</span>，不在本库内，同样不受影响。</p>
+</section>
+
+<section class="panel below-panel">
+<div class="panel-heading"><h2>清空操作</h2><span class="dim">每项都会先自动备份</span></div>
+<div class="table-scroll" tabindex="0" role="region" aria-label="清空操作"><table class="list">
+<thead><tr><th>动作</th><th>会清掉什么</th><th>条数</th><th></th></tr></thead><tbody>
+<tr>
+  <td><strong>清空政策库</strong><p class="hint">保留采集台账与来源配置，清空后可原样重采。</p></td>
+  <td>政策、附件记录、复核留痕、来源关联</td>
+  <td>{{ n_library.v }}</td>
+  <td><form method="post" action="{{ url_for('maintenance_clear') }}"
+        onsubmit="return confirm('确认清空政策库？\n\n将清掉 {{ n_library.v }} 条记录（政策 / 附件 / 复核留痕）。\n来源配置与采集台账保留，清空后可重新采集。\n清空前会自动备份，可从备份恢复。');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="scope" value="library">
+    <input type="hidden" name="confirm" value="{{ tokens.library }}">
+    <button class="btn warn sm" type="submit" {% if running or n_library.v == 0 %}disabled{% endif %}>清空政策库</button>
+  </form></td>
+</tr>
+<tr>
+  <td><strong>清空运行日志</strong><p class="hint">只清过程记录，政策内容不动。</p></td>
+  <td>采集批次、逐份处理过程</td>
+  <td>{{ n_logs.v }}</td>
+  <td><form method="post" action="{{ url_for('maintenance_clear') }}"
+        onsubmit="return confirm('确认清空运行日志？\n\n将清掉 {{ n_logs.v }} 条过程记录。\n政策库内容不受影响。');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="scope" value="logs">
+    <input type="hidden" name="confirm" value="{{ tokens.logs }}">
+    <button class="btn sm" type="submit" {% if running or n_logs.v == 0 %}disabled{% endif %}>清空运行日志</button>
+  </form></td>
+</tr>
+<tr>
+  <td><strong>全部清空</strong><p class="hint">回到「刚装好、还没采过」的状态。</p></td>
+  <td>上面两项之和</td>
+  <td>{{ n_library.v + n_logs.v }}</td>
+  <td><form method="post" action="{{ url_for('maintenance_clear') }}"
+        onsubmit="return confirm('确认全部清空？\n\n将清掉 {{ n_library.v + n_logs.v }} 条记录（政策库 + 运行日志）。\n来源配置仍会保留。\n清空前会自动备份，可从备份恢复。');">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="scope" value="all">
+    <input type="hidden" name="confirm" value="{{ tokens.all }}">
+    <button class="btn warn sm" type="submit" {% if running or (n_library.v + n_logs.v) == 0 %}disabled{% endif %}>全部清空</button>
+  </form></td>
+</tr>
+</tbody></table></div>
+<p class="hint">确认口令已随页面生成（如 <span class="mono">{{ tokens.library }}</span>），提交时服务端会再核对一次条数：若页面打开后又采进了新数据，会直接拒绝而不是照旧范围多清。</p>
+</section>
+
+<section class="panel below-panel">
+<div class="panel-heading"><h2>备份</h2><span class="dim">{{ backups|length }} 份（最多显示 8 份）</span></div>
+{% if backups %}
+<div class="table-scroll" tabindex="0" role="region" aria-label="备份列表"><table class="list">
+<thead><tr><th>备份文件</th><th>大小</th><th>备份时间</th></tr></thead><tbody>
+{% for b in backups %}<tr><td class="mono">{{ b.name }}</td><td>{{ b.mb }} MB</td><td>{{ b.at }}</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="hint">备份存放在 <span class="mono">data/backups/</span>。恢复方式：停止本服务 → 用备份文件覆盖 <span class="mono">data/policy.db</span>（连同同名的 <span class="mono">-wal</span>/<span class="mono">-shm</span> 一并删除）→ 重新启动。</p>
+{% else %}
+<div class="hint">还没有备份。执行任意清空操作时会自动生成第一份。</div>
+{% endif %}
+</section>
+{% endblock %}

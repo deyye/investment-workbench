@@ -1,0 +1,10 @@
+services:
+  workbench:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - workbench-data:/app/data
+    restart: unless-stopped
+volumes:
+  workbench-data:
