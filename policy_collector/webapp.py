@@ -35,6 +35,8 @@ CAT_CODES = {"guide": "引导类", "access": "准入类", "guarantee": "保障�
 # 每页条数的候选值。给范围而不是自由输入：既挡住 `per=100000` 这类拖垮页面的
 # 取值，也挡住 `per=0`（会算出除零与"共 0 页"）。
 PAGE_SIZES = (20, 50, 100)
+# 步骤明细一屏通常看得完 50 条，所以时间线的档位比列表大一档。
+EVENT_PAGE_SIZES = (50, 100, 200)
 
 #: 单次导出的上限。导出是"当前筛选结果"，正常用法会先收窄条件；
 #: 给个上限是为了避免误点"全部导出"时一次性拉出十几万行把浏览器拖住。
@@ -53,6 +55,33 @@ POLICY_SORT_COLUMNS = (
 )
 POLICY_SORT_DEFAULT_DIR = {key: direction for key, _label, direction in POLICY_SORT_COLUMNS}
 POLICY_SORT_LABELS = {key: label for key, label, _direction in POLICY_SORT_COLUMNS}
+
+
+def pager_qs(state: dict, defaults: dict):
+    """分页链接的查询串构造器——**全站唯一一处**。
+
+    参数保留是列表页最容易悄悄退化的地方：改了搜索词翻页丢排序、翻页丢每页条数。
+    每一页各写一套 href 必然漂移（运行记录页原来那版就只带覆盖值，
+    从 `?per=100` 点"下一页"会退回默认每页条数）。所以这里统一成规则：
+
+      ① 覆盖值盖住当前值；显式传 None 表示"把这个参数去掉"
+      ② 与默认值相同的参数不写进地址（链接短、可读、能直接分享）
+      ③ 因此 page=1 天然被省略，不需要额外的特判
+
+    返回 (qs, base)：`base` 是"当前生效且非默认"的参数，供模板里的
+    每页条数 / 跳页两个 GET 表单当隐藏域用。
+    """
+    base = {k: str(v) for k, v in state.items() if str(v) != str(defaults.get(k, ""))}
+
+    def qs(**overrides):
+        merged = {**base, **{k: str(v) for k, v in overrides.items() if v is not None}}
+        for key, value in overrides.items():
+            if value is None:
+                merged.pop(key, None)
+        merged = {k: v for k, v in merged.items() if str(v) != str(defaults.get(k, ""))}
+        return ("?" + urlencode(merged)) if merged else ""
+
+    return qs, base
 
 
 def _form_prefer(cfg) -> str:
@@ -125,8 +154,17 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
             abort(400, '表单已失效，请刷新页面重试')
 
     @app.context_processor
-    def form_token():
-        return {'csrf_token': session.get('csrf','')}
+    def template_globals():
+        # csrf_token 与 preview_mode 都放这里。
+        #
+        # preview_mode 以前**只在 scripts/ui_demo.py 的演示模式里注入**，正式环境下
+        # base.html 的 `{% if preview_mode %}` 靠 Jinja 的未定义变量静默为假。结果就是：
+        # 页面 200、测试全绿、横幅永远不显示——但"它到底什么时候才会出现"没有任何
+        # 代码说得清，改模板的人也无从判断是自己写错了还是本该如此。
+        #
+        # 这里显式给默认值。演示脚本在 create_app() 之后再注册一个 context processor，
+        # 按 Flask 的顺序后者覆盖前者，所以演示模式仍然显示横幅。
+        return {'csrf_token': session.get('csrf', ''), 'preview_mode': False}
 
     boot = Pipeline(cfg)
     try:
@@ -216,16 +254,7 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
         state = {"q": q, "region": region, "category": category, "review": review,
                  "todo": todo, "sort": sort, "order": order, "per": per}
         defaults = {"sort": "id", "order": POLICY_SORT_DEFAULT_DIR["id"], "per": PAGE_SIZES[0], "page": 1}
-        base = {k: v for k, v in state.items() if str(v) != str(defaults.get(k, ""))}
-
-        def qs(**overrides):
-            """在 base 之上换掉若干参数，生成可点的查询串；等于默认值的参数不写进地址。"""
-            merged = {**base, **{k: str(v) for k, v in overrides.items() if v is not None}}
-            for key, value in overrides.items():
-                if value is None:
-                    merged.pop(key, None)
-            merged = {k: v for k, v in merged.items() if str(v) != str(defaults.get(k, ""))}
-            return ("?" + urlencode(merged)) if merged else ""
+        qs, base = pager_qs(state, defaults)
 
         return render_template(
             "policies.html", rows=rows, q=q, category=category, region=region, review=review, todo=todo,
@@ -329,8 +358,25 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
 
     @app.get('/quality')
     def material_quality():
-        from .quality import attachment_report
-        return render_template('quality.html',report=attachment_report(db()))
+        from .quality import attachment_report, parse_error_report
+        d = db()
+        # 附件明细原来是整表一次性渲染（本库 801 条），页面上既没有分页也没有
+        # "总共多少条"。清单短的时候看不出来，长了以后"后面还有多少"完全无从判断。
+        # 这里与政策库共用同一套分页参数。
+        report = attachment_report(d)
+        per = request.args.get('per', 0, type=int)
+        if per not in PAGE_SIZES:
+            per = PAGE_SIZES[0]
+        total = len(report['details'])
+        pages = max(1, (total + per - 1) // per)
+        page_requested = max(request.args.get('page', 1, type=int), 1)
+        page = min(page_requested, pages)
+        report['details'] = report['details'][(page - 1) * per:page * per]
+        qs, base = pager_qs({"per": per}, {"per": PAGE_SIZES[0], "page": 1})
+        return render_template('quality.html', report=report, parse_report=parse_error_report(d),
+                               page=page, pages=pages, total=total, per=per, qs=qs, base=base,
+                               page_sizes=PAGE_SIZES, clamped=page_requested > pages and total > 0,
+                               page_requested=page_requested)
 
     # ---------------- 人工复核 ----------------
     @app.route("/policies/<int:pid>/review", methods=["POST"])
@@ -470,20 +516,20 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
         # 正在运行的批次落在第 1 页，只看本页会让自动刷新悄悄停掉。
         running = _RUN_LOCK.locked() or d.count_runs(status="running") > 0
 
-        def qs(**overrides):
-            merged = {k: str(v) for k, v in overrides.items() if v is not None}
-            merged = {k: v for k, v in merged.items() if v != str(PAGE_SIZES[0]) or k != "per"}
-            if merged.get("page") == "1":
-                merged.pop("page")
-            return ("?" + urlencode(merged)) if merged else ""
+        # 与政策库共用同一套查询串构造：以前这里只把"覆盖值"拼进地址，
+        # 于是从 ?per=100 点"下一页"会把每页条数悄悄退回默认值。
+        state = {"per": per}
+        defaults = {"per": PAGE_SIZES[0], "page": 1}
+        qs, base = pager_qs(state, defaults)
 
         return render_template("runs.html", rows=parsed, running=running, smap=smap,
                                page=page, pages=pages, total=total, per=per,
                                page_sizes=PAGE_SIZES, clamped=clamped,
-                               page_requested=page_requested, qs=qs)
+                               page_requested=page_requested, qs=qs, base=base)
 
     @app.get('/runs/<run_id>')
     def run_detail(run_id):
+        from .quality import parse_error_report
         d=db()
         row=d._conn.execute('SELECT * FROM run_logs WHERE run_id=?',(run_id,)).fetchone()
         if row is None: abort(404)
@@ -491,7 +537,25 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
         r['summary_obj']=json.loads(r['summary'] or '{}')
         r['progress_obj']=json.loads(r.get('progress') or '{}')
         source=next((s for s in d.list_sources() if s['id']==r['source_id']),{})
-        return render_template('run_detail.html',r=r,source=source,events=d.run_events(run_id),running=r['status']=='running')
+        # 步骤明细分页。原来是写死"最近100步"，看上去像设计，其实是硬上限：
+        # 实测单个全国批次最多 1635 条事件，第 101 步往前在页面上等于不存在，
+        # 而且没有任何提示说"还有更多"。
+        per = request.args.get('per', 0, type=int)
+        if per not in EVENT_PAGE_SIZES: per = EVENT_PAGE_SIZES[0]
+        event_total = d.count_events(run_id)
+        pages = max(1, (event_total + per - 1) // per)
+        page_requested = max(request.args.get('page', 1, type=int), 1)
+        page = min(page_requested, pages)
+        events = d.run_events(run_id, limit=per, offset=(page - 1) * per) if event_total else []
+        # 正文解析异常归因：这些结论以前只存在于"查库的人"脑子里。批次页和材料质量页
+        # 共用同一份报告，避免两处口径各写一遍。
+        qs, base = pager_qs({"per": per}, {"per": EVENT_PAGE_SIZES[0], "page": 1})
+        return render_template('run_detail.html', r=r, source=source, events=events,
+                               running=r['status']=='running',
+                               parse_report=parse_error_report(d) if r['kind']=='batch' else None,
+                               page=page, pages=pages, total=event_total, per=per, qs=qs, base=base,
+                               page_sizes=EVENT_PAGE_SIZES, clamped=page_requested > pages and event_total > 0,
+                               page_requested=page_requested)
 
     @app.get('/attachments/<int:aid>/download')
     def attachment_download(aid):

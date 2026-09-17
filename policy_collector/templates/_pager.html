@@ -1,0 +1,38 @@
+{# 分页条 —— 全站共用一份。
+   起因：policies.html 与 runs.html 各写了一个几乎相同的 macro。改一处忘一处必然漂移，
+   实测 runs 那版就漏掉了 base 隐藏域——从 ?per=100 点"下一页"会悄悄退回默认每页条数。
+   参数由 webapp.pager_qs() 统一构造，见那里的三条规则。
+
+   第一个参数收的是**已经构造好的地址**（如 url_for('run_detail', run_id=...)），
+   而不是 endpoint 名：带路径参数的页面（/runs/<run_id>）光有 endpoint 建不出 URL。 #}
+{% macro pager(base_url, qs, base, page, pages, total, per, page_sizes, unit='条') -%}
+{# id="pager"：一是给页内跳转用（地址加 #pager 直接落到分页条，长表格翻页后
+   不必再滚回底部），二是验收截图需要一个稳定的锚点。每页只渲染一个分页条。 #}
+<nav class="pager" id="pager" aria-label="分页导航">
+  <span class="pg">共 <b>{{ total }}</b> {{ unit }}{% if total %} · 第 {{ page }} / {{ pages }} 页{% endif %}</span>
+  <form class="pg-per" method="get" action="{{ base_url }}">
+    {% for k, v in base.items() if k != 'per' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <label>每页
+      <select name="per" aria-label="每页显示条数" onchange="this.form.submit()">
+        {% for size in page_sizes %}<option value="{{ size }}" {% if size == per %}selected{% endif %}>{{ size }}</option>{% endfor %}
+      </select> {{ unit }}</label>
+    <noscript><button class="btn sm" type="submit">应用</button></noscript>
+  </form>
+  <span class="pager-nav">
+    {% if page > 1 %}<a class="btn sm" href="{{ base_url }}{{ qs(page=page-1) }}">上一页</a>
+    {% else %}<span class="btn sm off" aria-disabled="true">上一页</span>{% endif %}
+    {% if page < pages %}<a class="btn sm" href="{{ base_url }}{{ qs(page=page+1) }}">下一页</a>
+    {% else %}<span class="btn sm off" aria-disabled="true">下一页</span>{% endif %}
+  </span>
+  <form class="pg-jump" method="get" action="{{ base_url }}">
+    {% for k, v in base.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <label>跳至<input type="number" name="page" min="1" max="{{ pages }}" value="{{ page }}" aria-label="跳转到第几页">页</label>
+    <button class="btn sm" type="submit">跳转</button>
+  </form>
+</nav>
+{%- endmacro %}
+
+{# 页码越界提示。必须解释"为什么跳到最后一页"——不解释就看起来像丢数据。 #}
+{% macro clamp_note(clamped, page_requested, pages) -%}
+{% if clamped %}<p class="flash warn" role="status">第 {{ page_requested }} 页超出范围（当前条件下共 {{ pages }} 页），已跳到最后一页。</p>{% endif %}
+{%- endmacro %}

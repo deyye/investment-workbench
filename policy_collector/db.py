@@ -340,6 +340,14 @@ class Database:
         args = [*args, limit, offset]
         with self._conn:
             rows = [dict(r) for r in self._conn.execute(sql, args)]
+            # "哪条附件命中了关键词"是可选的补充信息，但**字段本身是固定的**：
+            # 没命中就留空，而不是让这两个键时有时无。
+            # 之前只在真正命中时才往 row 里塞键，模板写 `{% if p.matched_attachment %}`
+            # 时其实是靠 Jinja 的未定义变量静默为假——功能碰巧是对的，但字段契约是虚的，
+            # 换个人把判断写成 `is not none` 就会整列出错。
+            for r in rows:
+                r.setdefault('matched_attachment', '')
+                r.setdefault('attachment_excerpt', '')
             if keyword and rows:
                 by_id = {r['id']: r for r in rows}
                 marks = ','.join('?' for _ in rows)
@@ -348,7 +356,11 @@ class Database:
                     [*by_id, f'%{keyword}%'])
                 for match in matches:
                     row = by_id[match['policy_id']]
-                    if 'matched_attachment' in row:
+                    # 判据是"**已经有值**"，不是"键存在"：上面为了固定字段契约，
+                    # 给所有行都预置了空串——继续用 `'matched_attachment' in row`
+                    # 会让每一行都算"已处理过"，结果一个附件名都写不进去。
+                    # （这条被 tests/policy/test_review_fixes.py 当场抓到。）
+                    if row['matched_attachment']:
                         continue
                     text = match['parsed_text']
                     position = max(0, text.lower().find(keyword.lower()))
@@ -420,8 +432,22 @@ class Database:
             data.update(fields)
             cur.execute('UPDATE run_logs SET progress=? WHERE run_id=?',(json.dumps(data,ensure_ascii=False),run_id))
 
-    def run_events(self, run_id, limit=100):
-        return [dict(r) for r in self._conn.execute('SELECT * FROM agent_events WHERE run_id=? ORDER BY id DESC LIMIT ?', (run_id,limit))][::-1]
+    def run_events(self, run_id, limit=100, offset=0):
+        """某个 run 的步骤明细，新的在前（页内再转成正序）。
+
+        原来是固定 `LIMIT 100`，调用方的注释写着"显示最近100步"——听上去像个设计，
+        实际是**硬上限**：一个全国批次实测能产生 1635 条事件，第 101 步往前全部
+        看不见，页面上也没有任何提示说"还有更多"。补上 offset 之后由调用方控制分页。
+        """
+        return [dict(r) for r in self._conn.execute(
+            'SELECT * FROM agent_events WHERE run_id=? ORDER BY id DESC LIMIT ? OFFSET ?',
+            (run_id, limit, offset))][::-1]
+
+    def count_events(self, run_id) -> int:
+        """某个 run 的事件总数——有了它，时间线才能显示"共 N 步 / 第 x 页"。"""
+        with self._conn:
+            return int(self._conn.execute(
+                'SELECT COUNT(*) FROM agent_events WHERE run_id=?', (run_id,)).fetchone()[0])
 
     def policy_agent_events(self, pid):
         return [dict(r) for r in self._conn.execute("""SELECT * FROM agent_events WHERE fetch_id IN

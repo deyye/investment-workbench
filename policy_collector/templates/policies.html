@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}政策库 - 政策文件归集系统{% endblock %}
 {% from '_ui.html' import icon, page_head, empty %}
+{% from '_pager.html' import pager, clamp_note %}
 
 {# 可排序表头：点第一次用该列的默认方向，再点一次翻转。
    箭头只在当前排序列点亮，未排序列给一个淡的双向标记，暗示"这里可以点"。 #}
@@ -11,34 +12,6 @@
     <a class="th-sort{% if on %} on{% endif %}" href="{{ url_for('policies') }}{{ qs(sort=key, order=next) }}"
        title="按「{{ label }}」{{ '降序' if next == 'desc' else '升序' }}排列"><span>{{ label }}</span><span class="sort-mark" aria-hidden="true">{{ '↑' if on and order == 'asc' else ('↓' if on else '↕') }}</span></a>
   </th>
-{%- endmacro %}
-
-{# 分页条：上下各一份。长列表翻到末尾时不必再滚回顶部。
-   跳页用 GET 表单而不是 JS，且把当前筛选/排序/每页条数都带成隐藏域——
-   否则"跳到第 5 页"会把搜索词和排序一起丢掉。 #}
-{% macro pager() -%}
-<div class="pager">
-  <span class="pg">共 <b>{{ total }}</b> 条{% if total %} · 第 {{ page }} / {{ pages }} 页{% endif %}</span>
-  <form class="pg-per" method="get" action="{{ url_for('policies') }}">
-    {% for k, v in base.items() if k != 'per' %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
-    <label>每页
-      <select name="per" aria-label="每页显示条数" onchange="this.form.submit()">
-        {% for size in page_sizes %}<option value="{{ size }}" {% if size == per %}selected{% endif %}>{{ size }}</option>{% endfor %}
-      </select> 条</label>
-    <noscript><button class="btn sm" type="submit">应用</button></noscript>
-  </form>
-  <span class="pager-nav">
-    {% if page > 1 %}<a class="btn sm" href="{{ url_for('policies') }}{{ qs(page=page-1) }}">上一页</a>
-    {% else %}<span class="btn sm off" aria-disabled="true">上一页</span>{% endif %}
-    {% if page < pages %}<a class="btn sm" href="{{ url_for('policies') }}{{ qs(page=page+1) }}">下一页</a>
-    {% else %}<span class="btn sm off" aria-disabled="true">下一页</span>{% endif %}
-  </span>
-  <form class="pg-jump" method="get" action="{{ url_for('policies') }}">
-    {% for k, v in base.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
-    <label>跳至<input type="number" name="page" min="1" max="{{ pages }}" value="{{ page }}" aria-label="跳转到第几页">页</label>
-    <button class="btn sm" type="submit">跳转</button>
-  </form>
-</div>
 {%- endmacro %}
 
 {% block content %}
@@ -111,7 +84,7 @@
   {% endfor %}
   </tbody>
 </table></div>
-{{ pager() }}
+{{ pager(url_for('policies'), qs, base, page, pages, total, per, page_sizes) }}
 {% else %}
 {{ empty("未找到匹配的政策", "试着减少筛选条件，或前往采集来源归集新的政策文件。", "search") }}
 {% endif %}

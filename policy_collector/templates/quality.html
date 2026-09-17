@@ -1,9 +1,20 @@
 {% extends 'base.html' %}
 {% from '_ui.html' import page_head, empty %}
+{% from '_pager.html' import pager, clamp_note %}
+{% from '_diagnostics.html' import parse_diagnostics %}
 {% block title %}材料质量 - 投资政策工作台{% endblock %}
 {% block content %}
 {{ page_head('MATERIAL QUALITY / 资料核验','材料质量','分别查看原件留存与正文解析情况，定位影响政策判断的材料缺口。') }}
+{{ clamp_note(clamped, page_requested, pages) }}
 <div class="metrics-grid">{% for name,value in [('当前版本附件',report.attachments),('原件下载并校验',report.download_ok),('解析检查通过',report.parse_complete),('待处理政策',report.affected_policies)] %}<div class="metric"><div class="metric-top">{{ name }}</div><div class="metric-value">{{ value }}</div></div>{% endfor %}</div>
-<section class="panel"><div class="panel-heading"><h2>按格式统计</h2></div><div class="table-scroll" tabindex="0"><table class="list"><thead><tr><th>格式</th><th>附件总数</th><th>下载校验通过</th><th>解析检查通过</th><th>需要处理</th></tr></thead><tbody>{% for fmt,c in report.by_format.items() %}<tr><td>{{ fmt|upper }}</td><td>{{ c['total'] }}</td><td>{{ c['download_ok'] }}</td><td>{{ c['parse_complete'] }}</td><td>{{ c['needs_attention'] }}</td></tr>{% endfor %}</tbody></table></div></section>
-<section class="panel below-panel"><div class="panel-heading"><h2>附件处理明细</h2></div>{% if report.details %}<div class="table-scroll" tabindex="0"><table class="list"><thead><tr><th>所属政策与附件</th><th>原件留存</th><th>正文解析</th><th>缺口说明</th></tr></thead><tbody>{% for a in report.details %}<tr><td><a href="{{ url_for('policy_detail',pid=a.policy_id) }}">{{ a.title }}</a><p class="hint">{{ a.name }}</p></td><td>{{ '已校验' if a.download_ok else '待补采' }}</td><td>{{ '检查通过' if a.parse_complete else '不完整' }}{% if a.total_pages %}<p class="hint">{{ a.parsed_pages }}/{{ a.total_pages }} 页</p>{% endif %}</td><td>{{ a.latest_attempt.error if a.latest_attempt and a.latest_attempt.error else a.error or '—' }}</td></tr>{% endfor %}</tbody></table></div>{% else %}{{ empty('暂无附件记录','采集政策后可在此查看材料缺口。') }}{% endif %}</section><p class="hint below-panel">{{ report.scope }}</p>
+
+{{ parse_diagnostics(parse_report, '正文解析异常 · 按来源归因') }}
+
+<section class="panel below-panel"><div class="panel-heading"><h2>按格式统计</h2></div><div class="table-scroll" tabindex="0"><table class="list"><thead><tr><th>格式</th><th>附件总数</th><th>下载校验通过</th><th>解析检查通过</th><th>需要处理</th></tr></thead><tbody>{% for fmt,c in report.by_format.items() %}<tr><td>{{ fmt|upper }}</td><td>{{ c['total'] }}</td><td>{{ c['download_ok'] }}</td><td>{{ c['parse_complete'] }}</td><td>{{ c['needs_attention'] }}</td></tr>{% endfor %}</tbody></table></div></section>
+
+<section class="panel below-panel"><div class="panel-heading"><h2>附件处理明细</h2><span>共 {{ total }} 条{% if total %} · 第 {{ page }} / {{ pages }} 页{% endif %}</span></div>
+{% if report.details %}<div class="table-scroll" tabindex="0"><table class="list"><thead><tr><th>所属政策与附件</th><th>原件留存</th><th>正文解析</th><th>缺口说明</th></tr></thead><tbody>{% for a in report.details %}<tr><td><a href="{{ url_for('policy_detail',pid=a.policy_id) }}">{{ a.title }}</a><p class="hint">{{ a.name }}</p></td><td>{{ '已校验' if a.download_ok else '待补采' }}</td><td>{{ '检查通过' if a.parse_complete else '不完整' }}{% if a.total_pages %}<p class="hint">{{ a.parsed_pages }}/{{ a.total_pages }} 页</p>{% endif %}</td><td>{{ a.latest_attempt.error if a.latest_attempt and a.latest_attempt.error else a.error or '—' }}</td></tr>{% endfor %}</tbody></table></div>
+{{ pager(url_for('material_quality'), qs, base, page, pages, total, per, page_sizes) }}
+{% else %}{{ empty('暂无附件记录','采集政策后可在此查看材料缺口。') }}{% endif %}</section>
+<p class="hint below-panel">{{ report.scope }}</p>
 {% endblock %}

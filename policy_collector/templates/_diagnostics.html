@@ -1,0 +1,46 @@
+{# 正文解析异常归因 —— 批次详情页与材料质量页共用同一份报告（quality.parse_error_report）。
+   这些信息一直躺在库里（`document_json.parse_error`），过去界面上一个字都没有：
+   点进批次详情只能看到 36 行"有异常"，没有一行说得出该修什么、重试会不会好。 #}
+{% macro parse_diagnostics(pr, heading='正文解析异常') -%}
+{% if pr %}
+<section class="panel below-panel">
+  <div class="panel-heading">
+    <h2>{{ heading }}</h2>
+    <span>{{ pr.parse_total }} 篇 · {{ pr.sites|length }} 个来源</span>
+  </div>
+  {% if pr.groups %}
+  <p class="hint">按<strong>原因</strong>归并，并标出该谁解决、重试会不会自愈。原因取自各来源的实际报错输出，不是人工维护的说明。</p>
+  <ul class="diag-list">
+  {% for g in pr.groups %}
+    <li class="diag-item">
+      <div class="diag-head">
+        <span class="tag {{ 'warn' if g.kind in ('code','ops') else 'neutral' }}">{{ g.owner }}</span>
+        <strong>{{ g.count }} 篇</strong>
+      </div>
+      <p>{{ g.advice }}</p>
+      <p class="diag-sites mono">{{ g.sites|join('、') }}</p>
+    </li>
+  {% endfor %}
+  </ul>
+  {% else %}
+  <p class="hint">当前没有正文解析异常。</p>
+  {% endif %}
+  {% if pr.failures %}
+  <h3 class="diag-sub">采集失败</h3>
+  <ul class="diag-list">
+  {% for g in pr.failures %}
+    <li class="diag-item">
+      <div class="diag-head">
+        <span class="tag {{ 'warn' if g.kind in ('code','ops') else 'neutral' }}">{{ g.owner }}</span>
+        <strong>{{ g.count }} 项</strong>
+        <span class="dim">{{ g.sites|join('、') }}</span>
+      </div>
+      <p>{{ g.advice }}</p>
+    </li>
+  {% endfor %}
+  </ul>
+  {% endif %}
+  <p class="hint">{{ pr.scope }}{% if pr.business_skipped %} 另有 {{ pr.business_skipped }} 条属"判定明确、不收录"，不计入异常。{% endif %}</p>
+</section>
+{% endif %}
+{%- endmacro %}

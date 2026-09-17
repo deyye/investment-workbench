@@ -863,6 +863,13 @@ main {
   background:#edf5f1;
   color:#548772
 }
+/* 中性态显式写出来：模板里有 5 处 `tag neutral`，此前没有这条规则——
+   它只是"刚好"回落到 .tag 基础色，属于靠未定义维持行为。
+   显示效果不变，但从此"写了 neutral 就一定有 neutral 的样子"。 */
+.tag.neutral {
+  background:#edf2f8;
+  color:#587898
+}
 .chip {
   margin:3px 5px 0 0
 }
@@ -2305,3 +2312,18 @@ td.td-status .dim { margin-left:6px }
    也不要把标题挤成一列一个字。注：`table.list.wide` 这个类名此前在模板里用了，
    但 CSS 里并没有定义——属于"看起来生效、其实没写"的一处。 */
 table.list.wide { min-width:940px }
+
+/* ── 正文解析异常归因（2026-09-16）────────────────────────────
+   这些结论一直在库里（fetch_records.document_json.parse_error），但界面上
+   只给一个 run 级"部分完成"标签。要回答"正文不全的上百篇卡在哪、该谁修、
+   重试会不会自己好"，从前只能去翻数据库；页面上点进批次详情，看到的是
+   几十行"有异常"，没有一行说得出该修什么。这里把它摆到明面上。 */
+.diag-list { list-style:none; margin:0; padding:0; display:grid; gap:10px }
+.diag-item { padding:11px 13px; border:1px solid var(--line); border-left:3px solid #c3ccd6;
+  border-radius:0 6px 6px 0; background:#fbfcfd }
+.diag-item .diag-head { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:5px }
+.diag-item .diag-head strong { font-size:12px; font-weight:500; color:var(--ink);
+  font-variant-numeric:tabular-nums }
+.diag-item p { margin:0; font-size:12px; line-height:1.65; color:#4d5b6b }
+.diag-item .diag-sites { margin-top:6px; font-size:11px; color:#8290a0; word-break:break-all }
+.diag-sub { margin:16px 0 8px; font-size:12px; font-weight:500; color:var(--ink) }

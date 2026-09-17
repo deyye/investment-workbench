@@ -166,3 +166,116 @@ def count_attachment_gaps(attachments) -> int:
 def count_attachment_failures(attachments) -> int:
     return sum(1 for a in attachments
                if a.get('parse_status') != 'ok' and not (a.get('sha256') or '').strip())
+
+
+# ---------- 正文解析异常：按来源汇总 + 归因 ----------
+#
+# 这些信息**一直都在库里**（`fetch_records.document_json.parse_error` 与
+# `fetch_records.error`），但过去界面上只给一个 run 级的"部分完成"标签。
+# 实际后果：要回答"正文不全的 166 篇到底卡在哪"，只能去翻数据库；从批次详情页
+# 点进去看到 36 行"有异常"，没有一行说得出该修什么。**有记录 ≠ 有界面。**
+#
+# 两条判据，都贴在真实输出上（不是另造一套说法）：
+#
+#   1) `fetch_records.error` 混装了两种语义——"业务判定不收录"（未命中投资项目
+#      表述、命中事务性关键词、命中存量企业运行类政策）和"技术失败"（HTTP 404、
+#      附件没抓到）。前者是**判定明确、无需人工**的正常结果，把它们一起当异常数，
+#      会把"口径已经判完了"报成一屏错误。所以先分流，再归因。
+#   2) 归因只用来回答"该谁解决"，不改变任何计数：每个原因映射到一个责任方和一句
+#      实话——重试会不会自愈。这一层判断以前只存在于人的脑子里。
+BUSINESS_SKIP_MARKER = '不收录'
+
+# 原因关键词 → (责任方标签, 归因类别, 那句实话)
+PARSE_ISSUE_RULES = (
+    ('未定位正文容器', '需改代码适配来源', 'code',
+     '该站正文放在非通用容器里（政务站常见的 TRS / Word 粘贴容器），解析器认不出，'
+     '只留了整页文本备用。重试不会自愈，要针对这个来源补一条容器规则。'),
+    ('动态防护', '需运维配置', 'ops',
+     '站点有动态防护，需要先在运行环境装好浏览器组件再跑。本机缺依赖时会一直卡在这里。'),
+    ('playwright', '需运维配置', 'ops',
+     '同"动态防护"：缺浏览器组件。装好后重跑该来源即可。'),
+    ('附件下载失败', '机器可自修', 'self',
+     '附件没抓下来（网络抖动或站点握手问题）。跑一轮"补采与重解析"绝大多数能自动收掉；'
+     '若仍失败，再按站点单独查。'),
+    ('来源不匹配或缺少网页原件', '机器可自修', 'self',
+     '本地没留网页原件，补采一次即可。'),
+)
+# 永久失效：如实告知不再重试，避免有人反复点下去
+PERMANENT_MARKERS = ('HTTP 404', 'HTTP 410', '404', '410')
+
+
+def classify_issue(text: str) -> tuple[str, str, str]:
+    """把一条报错文本映射成 (责任方, 类别, 实话)。**归因规则只定义这一处。**"""
+    text = (text or '').strip()
+    for marker in PERMANENT_MARKERS:
+        if marker in text:
+            return '无需处理', 'gone', ('链接已永久失效，按设计不重试：'
+                                    '反复重跑不会变好，也不会变坏。')
+    for key, owner, kind, advice in PARSE_ISSUE_RULES:
+        if key in text:
+            return owner, kind, advice
+    return '待判断', 'unknown', '尚未归类的原因。可以先把这条原文贴出来再定。'
+
+
+def parse_error_report(db) -> dict:
+    """正文解析异常：按来源汇总 + 归因。
+
+    只统计**当前版本**的政策（与其他质量报表同一口径），避免同一篇的历史版本
+    被重复计算——两条并行分支合并时踩过"口径一处变、另一处没变"的坑。
+    """
+    with db._conn:
+        site_rows = db._conn.execute('''
+            SELECT s.site AS site, s.name AS source_name, s.region AS region,
+                   COUNT(*) AS n, MAX(f.page_url) AS sample_url,
+                   MAX(COALESCE(json_extract(f.document_json,'$.parse_error'),'')) AS reason
+            FROM fetch_records f
+            JOIN source_configs s ON s.id = f.source_id
+            JOIN policies p ON p.source_fetch_id = f.id
+            WHERE p.version = (SELECT MAX(version) FROM policies v WHERE v.policy_key = p.policy_key)
+              AND f.document_json IS NOT NULL AND json_valid(f.document_json)
+              AND COALESCE(json_extract(f.document_json,'$.parse_error'),'') <> ''
+            GROUP BY s.site, s.name, s.region
+            ORDER BY n DESC''').fetchall()
+        # 技术失败（排除"业务判定不收录"）
+        fail_rows = db._conn.execute('''
+            SELECT s.site AS site, s.name AS source_name, f.error AS error, COUNT(*) AS n
+            FROM fetch_records f
+            JOIN source_configs s ON s.id = f.source_id
+            WHERE COALESCE(f.error,'') <> '' AND instr(f.error, ?) = 0
+            GROUP BY s.site, s.name, f.error
+            ORDER BY n DESC''', (BUSINESS_SKIP_MARKER,)).fetchall()
+        skipped = int(db._conn.execute(
+            '''SELECT COUNT(*) FROM fetch_records
+               WHERE instr(COALESCE(error,''), ?) > 0''', (BUSINESS_SKIP_MARKER,)).fetchone()[0])
+
+    sites = [dict(r) for r in site_rows]
+    groups: dict[str, dict] = {}
+    for s in sites:
+        owner, kind, advice = classify_issue(s['reason'])
+        g = groups.setdefault(owner, {'owner': owner, 'kind': kind, 'advice': advice,
+                                      'count': 0, 'sites': []})
+        g['count'] += s['n']
+        g['sites'].append(f"{s['site']}（{s['n']} 篇）")
+    order = {'code': 0, 'ops': 1, 'self': 2, 'unknown': 3, 'gone': 4}
+    group_list = sorted(groups.values(), key=lambda g: (order.get(g['kind'], 9), -g['count']))
+
+    failures = {}
+    for r in fail_rows:
+        owner, kind, advice = classify_issue(r['error'])
+        g = failures.setdefault(owner, {'owner': owner, 'kind': kind, 'advice': advice,
+                                        'count': 0, 'sites': [], 'reasons': []})
+        g['count'] += r['n']
+        g['sites'].append(r['site'])
+        g['reasons'].append({'text': r['error'], 'n': r['n'], 'site': r['site']})
+    failure_list = sorted(failures.values(), key=lambda g: (order.get(g['kind'], 9), -g['count']))
+
+    return {
+        'parse_total': sum(s['n'] for s in sites),
+        'sites': sites,
+        'groups': group_list,
+        'failures': failure_list,
+        'failure_total': sum(g['count'] for g in failure_list),
+        'business_skipped': skipped,
+        'scope': ('正文解析异常只统计当前版本政策；"业务判定不收录"是判定明确的结果，'
+                  '不属于异常，已单列。'),
+    }

@@ -1,4 +1,5 @@
 {% set p=r.progress_obj %}{% set s=r.summary_obj %}
+{% from '_diagnostics.html' import parse_diagnostics %}
 <section class="panel agent-progress" aria-live="polite">
 <div class="panel-heading"><h2>{{ '正在按省份依次采集' if r.status=='running' else '全国采集结果' }}</h2><span>{{ p.get('completed',0) }} / {{ p.get('total','待定') }} 个来源</span></div>
 {% if p.get('total') %}<progress max="{{ p.total }}" value="{{ p.get('completed',0) }}" aria-label="来源处理进度"></progress>{% endif %}
@@ -13,14 +14,15 @@
 <tbody>
 {% for x in rs %}<tr>
 <td>{{ x.site or x.source }}<div class="dim mono">{{ x.source }}</div></td>
-<td>{% if x.status=='ok' %}<span class="tag ok">完成</span>{% elif x.status=='partial' %}<span class="tag warn">有异常</span>{% else %}<span class="tag bad">失败</span>{% endif %}</td>
+<td>{% set st = x.get('status') %}{% if st=='ok' %}<span class="tag ok">完成</span>{% elif st=='partial' %}<span class="tag warn">有异常</span>{% else %}<span class="tag bad">失败</span>{% endif %}</td>
 <td>{{ x.get('ingested',0) }} / {{ x.get('updated',0) }}</td>
 <td>{{ x.get('duplicates',0) }}</td>
-<td>{{ x.get('failed',0) }}{% if x.error %}<div class="dim">{{ x.error[:60] }}</div>{% endif %}</td>
+<td>{{ x.get('failed',0) }}{% if x.get('error') %}<div class="dim">{{ x.get('error')[:60] }}</div>{% endif %}</td>
 <td>{% if x.get('run_id') %}<a href="{{ url_for('runs') }}">查看过程</a>{% endif %}</td>
 </tr>{% endfor %}
 </tbody></table></div>
 {% endif %}
+{% if parse_report %}{{ parse_diagnostics(parse_report, '正文解析异常归因') }}{% endif %}
 <div class="form-actions"><a class="btn primary" href="{{ url_for('policies',review='pending') }}">处理待复核</a><a class="btn" href="{{ url_for('material_quality') }}">查看材料缺口</a><a class="text-link" href="{{ url_for('runs') }}">全部运行记录</a></div>
 <p class="hint">进度只代表本批次各来源的处理情况；入库不等于人工确认，也不代表官网历史文件已采全。</p>
 </section>
