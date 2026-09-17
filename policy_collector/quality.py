@@ -10,11 +10,73 @@ from .attachment_parsers import PARSER_VERSION, is_permanent_download_error
 from .locking import ingestion_lock
 
 
-def attachment_quality(a):
+def _sha_matches(path: Path, expected: str) -> bool:
+    """文件内容是否与登记的 sha256 一致——**要把整个文件读一遍**。"""
+    if not (expected and path.is_file()):
+        return False
+    return hashlib.sha256(path.read_bytes()).hexdigest() == expected
+
+
+class FileVerifyCache:
+    """复用"原件与登记的 sha256 是否一致"的结论，键是 (路径, 大小, 修改时间)。
+
+    为什么必须有：材料质量页每次加载都要判断全部原件是否完好，而每次判断都要
+    把文件完整读一遍。本库 808 个附件共 449MB，线上实测单次 **13.5 秒**（其余页面
+    0.02–0.03 秒），用户点「材料质量」后 14 秒内页面毫无反应——表现就是"点不动"。
+
+    语义没有放宽：大小与修改时间一致就认为还是同一个文件，跳过重算哈希；
+    文件被重新下载/替换/截断（大小或时间变了）会立刻重算。**故障窗口只剩
+    "内容被改但大小与修改时间都不变"**，那需要有人刻意伪造，不是日常风险。
+    需要无条件重算时删掉 attachment_verify 表里的行即可。
+    """
+
+    def __init__(self, db):
+        self._db = db
+        self._rows = {r[0]: (r[1], r[2], r[3], r[4]) for r in db._conn.execute(
+            "SELECT local_path, size, mtime_ns, sha256, ok FROM attachment_verify")}
+        self._dirty: dict[str, tuple] = {}
+
+    def ok(self, path: Path, expected: str) -> bool:
+        if not expected:
+            return False
+        try:
+            st = path.stat()
+        except OSError:
+            return False            # 文件不在（或不可读）——与逐字节校验同结论
+        if not path.is_file():
+            return False
+        size, mtime = st.st_size, st.st_mtime_ns
+        key = str(path)
+        hit = self._rows.get(key)
+        if hit and hit[0] == size and hit[1] == mtime and hit[2] == expected:
+            return bool(hit[3])
+        ok = _sha_matches(path, expected)
+        self._rows[key] = (size, mtime, expected, int(ok))
+        self._dirty[key] = self._rows[key]
+        return ok
+
+    def flush(self) -> int:
+        """把本次新算出来的结论写回库。没有新结论时不碰库。"""
+        if not self._dirty:
+            return 0
+        rows = [(k, *v, now()) for k, v in self._dirty.items()]
+        with self._db.tx() as c:
+            c.executemany(
+                "INSERT INTO attachment_verify(local_path,size,mtime_ns,sha256,ok,checked_at)"
+                " VALUES(?,?,?,?,?,?)"
+                " ON CONFLICT(local_path) DO UPDATE SET size=excluded.size,"
+                " mtime_ns=excluded.mtime_ns, sha256=excluded.sha256,"
+                " ok=excluded.ok, checked_at=excluded.checked_at", rows)
+        n = len(self._dirty)
+        self._dirty.clear()
+        return n
+
+
+def attachment_quality(a, cache=None):
+    """单个附件的质量判定。`cache` 见 `FileVerifyCache`，不传就每次真算。"""
     path=Path(a.get('local_path') or '/nonexistent-policy-original')
-    downloaded=path.is_file() and bool(a.get('sha256'))
-    if downloaded:
-        downloaded=hashlib.sha256(path.read_bytes()).hexdigest()==a['sha256']
+    downloaded = cache.ok(path, a.get('sha256') or '') if cache is not None \
+        else _sha_matches(path, a.get('sha256') or '')
     # 注意：这里要求 parse_status 恰好为 'ok'，**是刻意的**——`partial` 表示
     # "正文已提取，但个别页是图形/模板或转换保真度存疑"（实测 OFD 报
     # "第2页含图形/模板或缺少文本，需渲染核对"），这是真实的材料缺口，
@@ -29,6 +91,9 @@ def attachment_quality(a):
 
 
 def attachment_report(db, source=''):
+    # 统计口径要覆盖全部附件，所以这里**不能只算当前页**——但判定结论可以缓存：
+    # 否则分页只分掉了渲染，没分掉真正昂贵的整文件校验。
+    cache = FileVerifyCache(db)
     rows=db._conn.execute('''SELECT a.*,p.title,p.page_url,p.region,p.source_fetch_id,p.parse_error,
         p.parse_requires_review,s.name AS source_name FROM attachments a JOIN policies p ON a.policy_id=p.id
         LEFT JOIN fetch_records f ON f.id=p.source_fetch_id LEFT JOIN source_configs s ON f.source_id=s.id
@@ -38,7 +103,7 @@ def attachment_report(db, source=''):
     for row in rows:
         a=dict(row)
         if source and a['source_name']!=source:continue
-        q=attachment_quality(a)
+        q=attachment_quality(a, cache)
         attempt=db._conn.execute('''SELECT * FROM attachment_attempts WHERE url=? AND fetch_id IN
             (SELECT fetch_id FROM policy_sources WHERE policy_id=?) ORDER BY id DESC LIMIT 1''',(a['url'],a['policy_id'])).fetchone()
         latest=dict(attempt) if attempt else None
@@ -49,7 +114,9 @@ def attachment_report(db, source=''):
         counts=formats[a['fmt'] or 'unknown'];counts['total']+=1
         counts['download_ok']+=q['download_ok'];counts['parse_complete']+=q['parse_complete']
         counts['needs_attention']+=item['needs_attention']
-    return {'scope':'当前版本附件，不含历史验证库；解析完整仅指程序检查通过，仍需业务核验',
+    cache.flush()
+    return {'scope':'当前版本附件，不含历史验证库；解析完整仅指程序检查通过，仍需业务核验；'
+                    '原件校验结论按文件大小与修改时间复用，文件一旦变动会自动重算',
         'attachments':len(details),'download_ok':sum(r['download_ok'] for r in details),
         'parse_complete':sum(r['parse_complete'] for r in details),
         'affected_policies':len({r['policy_id'] for r in details if r['needs_attention']}),

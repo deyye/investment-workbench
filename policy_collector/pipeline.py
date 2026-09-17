@@ -101,7 +101,13 @@ class Pipeline:
         # 该站有动态防护（瑞数等）时先过一次挑战换 cookie——**每个来源只做一次**，
         # 之后列表页与详情页都走纯 HTTP。握手失败不在这里判死，让正常抓取路径
         # 去暴露真实错误，免得把"握手没成功"笼统报成"站点不可达"。
-        if source.handshake:
+        # 整站只能走浏览器通道的站（甘肃）：cookie 交给纯 HTTP 客户端会被拒 400，
+        # 所以**不走握手**（那套是"换 cookie 给 requests 复用"），直接登记主机名 +
+        # 过一次挑战。真正的浏览器惰性起来，一次运行只开一个。
+        if source.browser_fetch:
+            self.collector.ensure_browser(source.handshake or source.list_url,
+                                          headless=source.headless)
+        elif source.handshake:
             self.collector.ensure_handshake(source.handshake)
         for page in range(1,source.max_pages+1):
             url=source.feed_url if source.list_format=='gov_json' else (next_url or list_page_url(source,page))

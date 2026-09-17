@@ -227,3 +227,10 @@ class SourceConfig:
     # 该站有动态防护（瑞数等）时，填握手入口 URL（通常就是站点首页）。
     # 采集前会用真实浏览器过一次挑战换 cookie，之后列表/详情走纯 HTTP。
     handshake: str = ""
+    # cookie 交给纯 HTTP 客户端会被拒的站（甘肃实测：握手 cookie + 完整浏览器头
+    # 依然 400，令牌与浏览器指纹绑定）。这类站填 true，列表/详情/附件都改用
+    # 浏览器上下文的请求通道，见 collector.ensure_browser / BrowserGateway。
+    browser_fetch: bool = False
+    # 过防护时是否用 headless。默认 true；甘肃这类会识别 headless 的站要填 false
+    # （非 headless 会短暂弹出一个浏览器窗口，属预期）。
+    headless: bool = True

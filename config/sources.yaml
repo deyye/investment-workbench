@@ -512,6 +512,47 @@ sources:
     pagination: single
     note: "同 hb_zcwj，另一栏目；gfxwj（清理结果公告）与 zcjd（解读）不收。"
 
+  - name: gs_tzgg
+    site: 甘肃省发展和改革委员会
+    region: 甘肃
+    category: 其他主动公开文件
+    enabled: true
+    # 瑞数防护 + **cookie 无法复用**：握手拿到的 cookie 交给 requests 一律被拒 400
+    # （补齐 Accept / Sec-Fetch-* / br 编码等浏览器头也无效），
+    # 同一 cookie 交给浏览器上下文的请求通道才 200。所以整站走浏览器。
+    # 另外该站识别 headless：headless 下挑战后重放被拒 400，必须 headless: false。
+    browser_fetch: true
+    headless: false
+    handshake: "http://fzgg.gansu.gov.cn/"
+    list_url: "http://fzgg.gansu.gov.cn/fzgg/tzgg/list.shtml"
+    # 列表是**静态 HTML**（源码里就有 21 条详情链接），不需要 JS 渲染，
+    # 通用 ListPageParser 直接可用；通道只负责过防护。
+    include: ["/fzgg/"]
+    detail_url_pattern: "/fzgg/[a-z0-9]+/[0-9]{6}/[0-9]+[.]shtml$"
+    exclude: [".pdf", ".doc", ".docx", ".ofd", ".xls", ".zip", ".rar"]
+    max_pages: 1
+    pagination: single
+    note: ("防护站：cookie 无法复用，列表/详情/附件整站走浏览器通道（headless 会被拒）。"
+           "2026-09-17 实测首次接通：列表 21 条详情链接、正文与附件均可取。"
+           "该栏目为最新在前，增量靠 URL 去重。")
+
+  - name: gs_zcwj
+    site: 甘肃省发展和改革委员会
+    region: 甘肃
+    category: 规范性文件
+    enabled: true
+    browser_fetch: true
+    headless: false
+    handshake: "http://fzgg.gansu.gov.cn/"
+    list_url: "http://fzgg.gansu.gov.cn/fzgg/c106108/zfxxgkzd.shtml"
+    include: ["/fzgg/"]
+    detail_url_pattern: "/fzgg/[a-z0-9]+/[0-9]{6}/[0-9]+[.]shtml$"
+    exclude: [".pdf", ".doc", ".docx", ".ofd", ".xls", ".zip", ".rar"]
+    max_pages: 1
+    pagination: single
+    note: ("同 gs_tzgg 的另一栏目（信息公开-政策）。列表页源码含 19 条详情链接；"
+           "该页翻页为 javascript:; 前端控制，首批只取第一页，后续按增量补齐。")
+
   - name: demo_local
     site: 本地样例（合成数据）
     region: 样例

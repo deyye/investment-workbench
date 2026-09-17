@@ -110,9 +110,58 @@ class Collector:
         self._handshake_entry: dict[str, str] = {}
         # 便于测试替换浏览器实现，默认用 browser_session.browser_cookies
         self.handshake_fn = None
+        # 整站只能走浏览器通道的主机（见 ensure_browser）：cookie 交给 requests
+        # 会被拒的站，列表/详情/附件都必须经浏览器网络栈取。
+        self.browser_fetch_hosts: set[str] = set()
+        self.browser_headless = True
+        self._gateway = None
 
     def close(self):
         self.session.close()
+        if self._gateway is not None:
+            self._gateway.close()
+            self._gateway = None
+
+    # ---------- 整站浏览器通道（cookie 无法复用的站） ----------
+    def ensure_browser(self, entry_url: str, headless: bool = True):
+        """把某主机登记为"必须走浏览器"，并就地过一次挑战。
+
+        与 `ensure_handshake` 的区别：握手是"浏览器换 cookie，之后 requests 复用"；
+        本通道是"cookie 只在浏览器网络栈里有效"，所以**不提 cookie**，
+        所有请求都交给同一个浏览器上下文（见 BrowserGateway 的实测记录）。
+        """
+        host = urllib.parse.urlsplit(entry_url).hostname or ""
+        if not host:
+            return False
+        self.browser_fetch_hosts.add(host)
+        self.browser_headless = headless
+        # 记下挑战入口：浏览器通道也要先用它过一次防护，再取具体页面。
+        self._handshake_entry[host] = entry_url
+        gateway = self._browser_gateway()
+        return gateway.open(entry_url)
+
+    def _browser_gateway(self):
+        if self._gateway is None:
+            from .browser_session import BrowserGateway
+            self._gateway = BrowserGateway(headless=self.browser_headless)
+        return self._gateway
+
+    def _fetch_via_browser(self, url: str, target: str) -> FetchResult:
+        """经浏览器通道取内容；非 2xx 一律如实回报，不重试——重试也过不去。"""
+        try:
+            status, body, ctype = self._browser_gateway().get(
+                target, entry_url=self._handshake_entry.get(
+                    urllib.parse.urlsplit(target).hostname or "", target))
+        except Exception as e:
+            if type(e).__name__ == "BrowserUnavailable":
+                raise
+            return FetchResult(ok=False, url=url, error=f"{type(e).__name__}: {str(e)[:160]}")
+        if status != 200:
+            return FetchResult(ok=False, url=url, error=f"HTTP {status}")
+        if len(body) > self.cfg.fetch.max_page_bytes:
+            return FetchResult(ok=False, url=url, error="超过单文件大小上限")
+        return FetchResult(ok=True, url=url, final_url=target, content=body,
+                           content_type=ctype, sha256=hashlib.sha256(body).hexdigest())
 
     # ---------- 动态防护（瑞数等）握手 ----------
     def ensure_handshake(self, entry_url: str, force: bool = False) -> bool:
@@ -199,6 +248,15 @@ class Collector:
             return FetchResult(ok=False, url=url, error="仅允许 HTTP/HTTPS 下载")
         target = self._https_if_required(url)
         host = urllib.parse.urlsplit(target).hostname or ""
+        # 整站走浏览器的站：**不走下面的 requests 重试逻辑**——失败不是超时或抖动，
+        # 而是被防护拒了，重试只会白等。间隔仍按"需要客气对待的站"处理。
+        if host in self.browser_fetch_hosts:
+            wait = max(self.cfg.fetch.request_interval_seconds, 2.5) - (
+                time.monotonic() - self._last_request)
+            if wait > 0:
+                time.sleep(wait)
+            self._last_request = time.monotonic()
+            return self._fetch_via_browser(url, target)
         last_err = ""
         for attempt in range(self.cfg.fetch.retries + 1):
             # 需要过动态防护的站，请求间隔**自动放慢**。实测湖北：按 0.5 秒连抓 1200+

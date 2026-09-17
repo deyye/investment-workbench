@@ -499,6 +499,11 @@ class Database:
             CREATE TABLE IF NOT EXISTS review_events (
                 id INTEGER PRIMARY KEY, policy_id INTEGER NOT NULL, action TEXT,
                 before_json TEXT, after_json TEXT, note TEXT, created_at TEXT);
+            -- "原件是否与登记的 sha256 一致"的结论缓存，见 quality.FileVerifyCache。
+            -- 不缓存的话每次打开材料质量页都要把全部原件完整读一遍（本库 808 个 / 449MB）。
+            CREATE TABLE IF NOT EXISTS attachment_verify (
+                local_path TEXT PRIMARY KEY, size INTEGER, mtime_ns INTEGER,
+                sha256 TEXT, ok INTEGER, checked_at TEXT);
         """)
         self._conn.execute("""INSERT OR IGNORE INTO policy_sources
             (policy_id,fetch_id,source_id,page_url,last_seen_at)
