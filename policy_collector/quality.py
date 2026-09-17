@@ -49,7 +49,7 @@ def attachment_report(db, source=''):
         counts=formats[a['fmt'] or 'unknown'];counts['total']+=1
         counts['download_ok']+=q['download_ok'];counts['parse_complete']+=q['parse_complete']
         counts['needs_attention']+=item['needs_attention']
-    return {'scope':'本库当前版本附件，不合并其他历史验证库；解析完整仅指程序检查通过，仍需业务核验',
+    return {'scope':'当前版本附件，不含历史验证库；解析完整仅指程序检查通过，仍需业务核验',
         'attachments':len(details),'download_ok':sum(r['download_ok'] for r in details),
         'parse_complete':sum(r['parse_complete'] for r in details),
         'affected_policies':len({r['policy_id'] for r in details if r['needs_attention']}),
@@ -276,6 +276,5 @@ def parse_error_report(db) -> dict:
         'failures': failure_list,
         'failure_total': sum(g['count'] for g in failure_list),
         'business_skipped': skipped,
-        'scope': ('正文解析异常只统计当前版本政策；"业务判定不收录"是判定明确的结果，'
-                  '不属于异常，已单列。'),
+        'scope': '只统计当前版本政策；"业务判定不收录"属判定明确，不计入异常。',
     }

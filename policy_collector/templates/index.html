@@ -3,10 +3,10 @@
 {% block title %}工作总览 · 投资政策{% endblock %}
 {% block content %}
 {% call page_head('OVERVIEW / 工作空间', '工作总览', '汇集政策资料，掌握采集进展，有序开展投资政策研究。') %}<a class="btn primary" href="{{ url_for('sources') }}">{{ icon('globe') }} 开始采集</a>{% endcall %}<section class="panel agent-progress"><h2>今天先做什么？</h2><div class="form-actions"><a class="btn primary" href="{{ url_for('sources') }}">1. 采集文件</a><a class="btn" href="{{ url_for('runs') }}">2. 查看处理进度</a><a class="btn" href="{{ url_for('todos') }}">3. 处理待办清单</a></div>
-<form method="post" action="{{ url_for('source_run_all') }}" class="inline-run"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="prefer" value="llm"><button class="btn" type="submit">{{ icon('globe') }} 一键全国采集（{{ stats.sources_enabled }} 个来源）</button><span class="hint">按来源依次采集，可离开此页；某一站失败不中断整批。</span></form>
-<p class="hint">系统自动检查材料、判断政策并留存依据。需要你处理的内容会进入待复核或材料缺口列表。</p></section>
+<form method="post" action="{{ url_for('source_run_all') }}" class="inline-run"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="prefer" value="llm"><button class="btn" type="submit">{{ icon('globe') }} 一键全国采集（{{ stats.sources_enabled }} 个来源）</button><span class="hint">可离开此页；单个来源失败不影响整批。</span></form>
+</section>
 <div class="metrics-grid">
-{% for value,label,glyph,sub in [(stats.policies,'政策记录','file','当前版本 · 含待办'),(todos.human,'需你处理','check','要你逐条判的；抽检与机器/运维的活不计入'),(stats.sources_enabled,'启用来源','globe','已配置来源共 ' ~ stats.sources ~ ' 个'),(stats.runs,'累计运行批次','activity','采集任务运行记录')] %}
+{% for value,label,glyph,sub in [(stats.policies,'政策记录','file','当前版本 · 含待办'),(todos.human,'需你处理','check','仅需人工判定'),(stats.sources_enabled,'启用来源','globe','已配置来源共 ' ~ stats.sources ~ ' 个'),(stats.runs,'累计运行批次','activity','采集任务运行记录')] %}
 <div class="metric {{ 'attention' if loop.index==2 else '' }}"><div class="metric-top"><span>{{ label }}</span><span class="metric-icon">{{ icon(glyph) }}</span></div><div class="metric-value">{{ value }}<span>{{ '个' if loop.index==3 else '批' if loop.index==4 else '份' }}</span></div><div class="metric-sub">{{ sub }}</div></div>
 {% endfor %}
 </div>

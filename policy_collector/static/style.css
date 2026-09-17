@@ -4,14 +4,23 @@
   --navy-deep:#10253e;
   --blue:#245e98;
   --ink:#20344d;
-  --muted:#738297;
+  --muted:#5d6f85;
   --line:#e5eaf0;
   --paper:#fff;
   --bg:#f3f5f8;
   --red:#b4524d;
   --gold:#b09564;
+  /* 与工作台/审批共用的令牌：同一套色值、同一档圆角、同一套字体栈。
+     --blue / --radius 是本文件的历史命名，保留以免改动 30 余处引用。 */
+  --brand:var(--blue);
+  --brand-ring:#5b8fc4;
+  --soft:#f8fafc;
+  --r-sm:6px;--r-md:9px;--r-lg:14px;
   --radius:9px;
-  --shadow:0 3px 16px #17324f04
+  --shadow:0 3px 16px #17324f0a;
+  --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Helvetica Neue",Arial,sans-serif;
+  /* 衬线只用于"正式文书"的点缀（政策正文、侧栏标语、复核标题），三套共用同一栈 */
+  --font-serif:"Noto Serif CJK SC","Songti SC","STSong","SimSun",Georgia,serif
 }
 * {
   box-sizing:border-box
@@ -20,7 +29,7 @@ body {
   margin:0;
   color:var(--ink);
   background:var(--bg);
-  font:14px/1.65 "Noto Sans CJK SC","Microsoft YaHei","PingFang SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font:14px/1.65 var(--font);
   -webkit-font-smoothing:antialiased
 }
 a {
@@ -44,7 +53,7 @@ h1,h2,h3,p {
   margin:0
 }
 h1 {
-  font-size:27px;
+  font-size:28px;
   line-height:1.4;
   font-weight:650;
   letter-spacing:.6px
@@ -75,10 +84,10 @@ input[type=checkbox] {
 }
 input:focus,select:focus,textarea:focus {
   border-color:#4c7caa;
-  outline:3px solid #245e9814
+  outline:2px solid var(--brand-ring)
 }
 a:focus-visible,button:focus-visible,summary:focus-visible {
-  outline:3px solid #a58043;
+  outline:3px solid var(--brand-ring);
   outline-offset:4px
 }
 button {
@@ -130,7 +139,7 @@ details[open] summary {
   font-weight:650
 }
 .brand small {
-  font-size:10px;
+  font-size:11px;
   color:#adbed1;
   letter-spacing:1px
 }
@@ -160,11 +169,11 @@ details[open] summary {
   justify-content:space-between;
   margin:0 24px 14px;
   color:#8ea5bd;
-  font-size:11px;
+  font-size:12px;
   letter-spacing:1px
 }
 .nav-caption span {
-  font-size:8px;
+  font-size:11px;
   letter-spacing:1.6px;
   opacity:.7
 }
@@ -227,14 +236,14 @@ details[open] summary {
 }
 .sidebar-note p {
   font-size:22px;
-  font-family:"Noto Serif CJK SC","STSong","SimSun",serif;
+  font-family:var(--font-serif);
   line-height:1.8;
   letter-spacing:6px;
   color:#d8e0e9
 }
 .sidebar-note small {
   display:block;
-  font-size:10px;
+  font-size:11px;
   color:#8ea3bb;
   margin-top:12px
 }
@@ -245,7 +254,7 @@ details[open] summary {
   margin:0 23px;
   padding:22px 0;
   border-top:1px solid #ffffff12;
-  font-size:10px;
+  font-size:11px;
   color:#a3b5c9
 }
 .sidebar-foot small {
@@ -288,7 +297,7 @@ details[open] summary {
   gap:21px;
   align-items:center;
   color:#7c8999;
-  font-size:11px
+  font-size:12px
 }
 .edition {
   color:#8b6e43;
@@ -296,7 +305,7 @@ details[open] summary {
   border:1px solid #ece2d0;
   border-radius:3px;
   padding:3px 9px;
-  font-size:10px
+  font-size:11px
 }
 main {
   width:100%;
@@ -314,7 +323,7 @@ main {
   margin-bottom:25px
 }
 .eyebrow {
-  font-size:9px;
+  font-size:11px;
   letter-spacing:2px;
   color:#8391a2;
   font-weight:500;
@@ -331,7 +340,7 @@ main {
 .foot {
   padding:16px 36px 22px;
   color:#8b97a7;
-  font-size:10px;
+  font-size:11px;
   display:flex;
   justify-content:space-between
 }
@@ -354,7 +363,7 @@ main {
   z-index:1
 }
 .hero-label {
-  font-size:10px;
+  font-size:11px;
   color:#c4d0db;
   letter-spacing:1.3px;
   display:flex;
@@ -376,14 +385,14 @@ main {
 }
 .hero p {
   color:#bdcddd;
-  font-size:11px
+  font-size:12px
 }
 .hero a {
   display:flex;
   align-items:center;
   gap:17px;
   color:#e7edf3;
-  font-size:11px;
+  font-size:12px;
   margin-top:17px;
   width:fit-content
 }
@@ -406,7 +415,7 @@ main {
   position:absolute;
   right:31px;
   bottom:21px;
-  font-size:9px;
+  font-size:11px;
   letter-spacing:4px;
   color:#afc0cf;
   opacity:.6
@@ -443,7 +452,7 @@ main {
   height:17px
 }
 .metric-value {
-  font-family:"Segoe UI",Arial,sans-serif;
+  font-family:var(--font);
   font-size:34px;
   line-height:1.4;
   font-weight:600;
@@ -452,12 +461,12 @@ main {
   font-variant-numeric:tabular-nums
 }
 .metric-value>span {
-  font:11px "Microsoft YaHei",sans-serif;
+  font:12px var(--font);
   color:#8b98a6;
   margin-left:9px
 }
 .metric-sub {
-  font-size:10px;
+  font-size:11px;
   color:#8b98a6
 }
 .metric.attention .metric-icon {
@@ -475,7 +484,7 @@ main {
 }
 .section-heading span {
   color:#8a97a6;
-  font-size:10px
+  font-size:11px
 }
 .category-grid {
   display:grid;
@@ -514,13 +523,13 @@ main {
   white-space:nowrap
 }
 .category-card h3 span {
-  font-size:9px;
+  font-size:11px;
   margin-left:7px;
   color:#8693a3;
   font-weight:400
 }
 .category-card p {
-  font-size:9px;
+  font-size:11px;
   color:#8a97a5;
   margin-top:5px;
   white-space:nowrap
@@ -581,7 +590,7 @@ main {
   border-radius:2px
 }
 .text-link {
-  font-size:10px;
+  font-size:11px;
   white-space:nowrap;
   color:#74879c
 }
@@ -635,7 +644,7 @@ main {
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  font-size:9px;
+  font-size:11px;
   color:#8c99a9;
   margin-top:8px
 }
@@ -678,7 +687,7 @@ main {
   display:flex;
   align-items:center;
   gap:8px;
-  font-size:10px;
+  font-size:11px;
   color:#90764f
 }
 .callout-top .icon {
@@ -686,7 +695,7 @@ main {
   height:16px
 }
 .review-callout h3 {
-  font-family:"Noto Serif CJK SC","STSong","SimSun",serif;
+  font-family:var(--font-serif);
   font-size:21px;
   line-height:1.7;
   letter-spacing:1px;
@@ -694,7 +703,7 @@ main {
   color:#615440
 }
 .review-callout p {
-  font-size:10px;
+  font-size:11px;
   color:#928573
 }
 .review-callout .btn {
@@ -704,7 +713,7 @@ main {
   border-color:#dfd4c1;
   color:#78613f;
   background:#ffffff70;
-  font-size:11px;
+  font-size:12px;
   position:relative;
   z-index:1
 }
@@ -762,7 +771,7 @@ main {
   display:flex;
   gap:10px;
   justify-content:space-between;
-  font-size:9px;
+  font-size:11px;
   color:#8c98a6;
   margin-top:5px
 }
@@ -771,7 +780,7 @@ main {
   align-items:center;
   gap:28px;
   padding:16px 3px 0;
-  font-size:10px;
+  font-size:11px;
   color:#8492a3;
   flex-wrap:wrap
 }
@@ -785,7 +794,7 @@ main {
   height:14px
 }
 .overview-strip strong {
-  font:500 13px "Segoe UI",sans-serif;
+  font:500 13px var(--font);
   color:#556c83
 }
 .overview-strip>p {
@@ -838,11 +847,11 @@ main {
 .btn.sm {
   padding:6px 10px;
   min-height:32px;
-  font-size:11px
+  font-size:12px
 }
 .tag,.chip {
   display:inline-block;
-  font-size:10px;
+  font-size:11px;
   line-height:1.8;
   padding:2px 8px;
   border-radius:3px;
@@ -877,7 +886,7 @@ main {
   display:inline-flex;
   align-items:center;
   gap:6px;
-  font-size:11px;
+  font-size:12px;
   color:#63758a;
   white-space:nowrap
 }
@@ -937,7 +946,7 @@ main {
 }
 .empty-state p {
   color:#98a3af;
-  font-size:11px;
+  font-size:12px;
   margin-top:7px
 }
 .empty {
@@ -967,7 +976,7 @@ main {
   border-color:#ece0c8
 }
 .preview-banner {
-  font-size:11px;
+  font-size:12px;
   padding:8px 14px
 }
 .notice {
@@ -995,26 +1004,26 @@ main {
   margin-bottom:3px
 }
 .notice p {
-  font-size:11px
+  font-size:12px
 }
 .dim,.meta,.id {
   color:#8b98a7;
-  font-size:11px
+  font-size:12px
 }
 .mono {
   font-family:Consolas,"SFMono-Regular",monospace;
-  font-size:11px;
+  font-size:12px;
   overflow-wrap:anywhere
 }
 .sm {
-  font-size:11px
+  font-size:12px
 }
 .id {
   white-space:nowrap
 }
 .id .dim {
   display:block;
-  font-size:9px
+  font-size:11px
 }
 .meta {
   white-space:nowrap
@@ -1023,7 +1032,7 @@ main {
   overflow:auto
 }
 .table-scroll:focus-visible {
-  outline:2px solid #b09564;
+  outline:2px solid var(--brand-ring);
   outline-offset:-2px
 }
 table.list {
@@ -1035,7 +1044,7 @@ table.list th {
   padding:14px 18px;
   background:#f8fafc;
   color:#7d8b9c;
-  font-size:10px;
+  font-size:11px;
   font-weight:500;
   white-space:nowrap;
   border-bottom:1px solid var(--line)
@@ -1044,7 +1053,7 @@ table.list td {
   padding:18px;
   border-bottom:1px solid #edf0f4;
   vertical-align:top;
-  font-size:11px;
+  font-size:12px;
   line-height:1.9
 }
 table.list tr:last-child td {
@@ -1063,7 +1072,7 @@ td.tt a {
   font-weight:500
 }
 .list .mono {
-  font-size:10px
+  font-size:11px
 }
 .table-caption {
   display:flex;
@@ -1077,7 +1086,7 @@ td.tt a {
   font-size:13px
 }
 .table-caption span {
-  font-size:10px;
+  font-size:11px;
   color:#8b97a6
 }
 .filter-panel {
@@ -1100,7 +1109,7 @@ td.tt a {
 }
 .filter select {
   min-width:130px;
-  font-size:11px
+  font-size:12px
 }
 .filter input {
   font-size:12px
@@ -1132,7 +1141,7 @@ td.tt a {
   border-top:1px solid var(--line)
 }
 .pg {
-  font-size:11px;
+  font-size:12px;
   color:#8290a0
 }
 .source-site {
@@ -1141,14 +1150,14 @@ td.tt a {
   color:#314a65
 }
 .source-code {
-  font-size:10px;
+  font-size:11px;
   color:#96a2af;
   margin-top:4px
 }
 .source-notes {
   max-width:340px;
   margin-top:10px;
-  font-size:10px;
+  font-size:11px;
   color:#8998a8
 }
 .source-notes summary {
@@ -1166,7 +1175,7 @@ td.tt a {
   align-items:center
 }
 .source-actions select {
-  font-size:10px;
+  font-size:11px;
   padding:6px;
   min-height:32px
 }
@@ -1174,7 +1183,7 @@ td.tt a {
   display:inline-flex;
   gap:5px;
   align-items:center;
-  font-size:10px;
+  font-size:11px;
   margin-top:7px
 }
 .source-link .icon {
@@ -1199,7 +1208,7 @@ td.tt a {
   margin:12px 0 22px
 }
 .document-label {
-  font-size:10px;
+  font-size:11px;
   letter-spacing:2px;
   color:#a16a60
 }
@@ -1211,7 +1220,7 @@ td.tt a {
   padding-top:18px
 }
 .meta-line .kv {
-  font-size:11px;
+  font-size:12px;
   color:#7b8a9b
 }
 .meta-line b {
@@ -1246,7 +1255,7 @@ pre.content {
   white-space:pre-wrap;
   overflow-wrap:anywhere;
   word-break:break-word;
-  font-family:"Noto Serif CJK SC","STSong","SimSun",serif;
+  font-family:var(--font-serif);
   font-size:15px;
   line-height:2.3;
   color:#374c63;
@@ -1275,7 +1284,7 @@ pre.content {
   flex-wrap:wrap
 }
 .review-row .btn {
-  font-size:11px
+  font-size:12px
 }
 .review-categories {
   margin:17px 0;
@@ -1284,14 +1293,14 @@ pre.content {
   gap:9px
 }
 .chk {
-  font-size:11px;
+  font-size:12px;
   color:#697d92;
   display:flex;
   gap:6px;
   align-items:center
 }
 .reason {
-  font-size:11px;
+  font-size:12px;
   color:#75869a;
   line-height:1.9;
   margin-top:17px;
@@ -1315,7 +1324,7 @@ pre.content {
   margin-bottom:14px
 }
 .detail-block p {
-  font-size:11px;
+  font-size:12px;
   overflow-wrap:anywhere;
   color:#76869a;
   margin-bottom:10px
@@ -1332,7 +1341,7 @@ pre.content {
   border-radius:4px
 }
 .attachment-table .hint {
-  font-size:10px;
+  font-size:11px;
   margin:8px 0;
   padding:7px 10px
 }
@@ -1367,7 +1376,7 @@ pre.content {
   font-size:12px
 }
 .form-field small {
-  font-size:10px;
+  font-size:11px;
   color:#93a0af
 }
 .form-actions {
@@ -1391,7 +1400,7 @@ pre.content {
   margin-top:20px
 }
 .settings-step>span {
-  font:500 12px "Segoe UI",sans-serif;
+  font:500 12px var(--font);
   color:#9b845b;
   padding-top:3px
 }
@@ -1400,7 +1409,7 @@ pre.content {
   margin-bottom:5px
 }
 .settings-step p {
-  font-size:11px;
+  font-size:12px;
   color:#8492a3;
   line-height:1.9
 }
@@ -1418,7 +1427,7 @@ pre.content {
   border-top:1px solid var(--line)
 }
 .settings-check p {
-  font-size:10px;
+  font-size:11px;
   color:#91a0af;
   margin-top:10px
 }
@@ -1439,7 +1448,7 @@ pre.content {
     font-size:13px
   }
   .category-card p {
-    font-size:10px
+    font-size:11px
   }
   .feed-content h3 {
     font-size:13px
@@ -1460,7 +1469,7 @@ pre.content {
     font-size:20px
   }
   .brand small {
-    font-size:9px
+    font-size:11px
   }
   main {
     padding:25px
@@ -1523,7 +1532,7 @@ pre.content {
     padding:29px 20px
   }
   .brand small {
-    font-size:8px;
+    font-size:11px;
     letter-spacing:0
   }
   .dashboard-columns,.settings-layout {
@@ -1549,7 +1558,7 @@ pre.content {
     padding:15px 12px
   }
   .metric-sub {
-    font-size:9px
+    font-size:11px
   }
   .metric-value {
     font-size:29px
@@ -1586,7 +1595,7 @@ pre.content {
     font-size:19px
   }
   .brand small {
-    font-size:10px
+    font-size:11px
   }
   .brand-mark {
     height:30px
@@ -1613,7 +1622,7 @@ pre.content {
     gap:5px;
     padding:10px 7px;
     margin-bottom:0;
-    font-size:10px
+    font-size:11px
   }
   .nav-item .icon {
     width:17px;
@@ -1634,7 +1643,7 @@ pre.content {
     padding:0 19px
   }
   .breadcrumb {
-    font-size:10px;
+    font-size:11px;
     gap:9px
   }
   main {
@@ -1649,14 +1658,14 @@ pre.content {
     font-size:23px
   }
   .page-heading p {
-    font-size:11px;
+    font-size:12px;
     max-width:270px
   }
   .eyebrow {
-    font-size:8px
+    font-size:11px
   }
   .heading-action .btn {
-    font-size:10px;
+    font-size:11px;
     padding:8px 11px;
     min-height:34px
   }
@@ -1671,7 +1680,7 @@ pre.content {
     font-size:25px
   }
   .hero p {
-    font-size:10px;
+    font-size:11px;
     max-width:225px
   }
   .hero-art {
@@ -1683,7 +1692,7 @@ pre.content {
     display:none
   }
   .hero-label {
-    font-size:9px
+    font-size:11px
   }
   .metrics-grid {
     grid-template-columns:repeat(2,minmax(0,1fr));
@@ -1694,7 +1703,7 @@ pre.content {
     padding:15px
   }
   .metric-top {
-    font-size:11px
+    font-size:12px
   }
   .metric-value {
     font-size:30px
@@ -1714,19 +1723,19 @@ pre.content {
     height:17px
   }
   .category-card h3 {
-    font-size:11px
+    font-size:12px
   }
   .category-card h3 span {
     display:none
   }
   .category-card p {
-    font-size:8px
+    font-size:11px
   }
   .section-heading h2 {
     font-size:14px
   }
   .section-heading span {
-    font-size:9px
+    font-size:11px
   }
   .dashboard-columns {
     gap:16px
@@ -1748,25 +1757,25 @@ pre.content {
     display:none
   }
   .feed-content h3 {
-    font-size:11px
+    font-size:12px
   }
   .feed-content p {
-    font-size:8px;
+    font-size:11px;
     gap:6px
   }
   .feed-row .tag {
-    font-size:8px;
+    font-size:11px;
     padding:2px 5px
   }
   .overview-strip {
     gap:16px
   }
   .overview-strip>p {
-    font-size:9px
+    font-size:11px
   }
   .foot {
     padding:12px 17px 22px;
-    font-size:8px;
+    font-size:11px;
     gap:14px
   }
   .filter-panel {
@@ -1786,7 +1795,7 @@ pre.content {
     padding:16px
   }
   .table-caption span {
-    font-size:9px
+    font-size:11px
   }
   .document-layout {
     gap:16px
@@ -1823,7 +1832,7 @@ pre.content {
     padding:14px
   }
   .notice p {
-    font-size:10px
+    font-size:11px
   }
 }
 @media(prefers-reduced-motion:reduce) {
@@ -1842,24 +1851,24 @@ pre.content {
   font-weight:550
 }
 .source-column {
-  font-size:11px;
+  font-size:12px;
   color:var(--muted);
   margin:3px 0
 }
 .source-url {
-  font-size:10px
+  font-size:11px
 }
 .source-url .icon,.attachment-actions .icon,.trace-item .icon {
   width:12px;
   height:12px
 }
 .source-note {
-  font-size:10px;
+  font-size:11px;
   margin-top:9px;
   max-width:430px
 }
 .source-error {
-  font-size:11px;
+  font-size:12px;
   color:#a2554b;
   margin-top:8px;
   overflow-wrap:anywhere
@@ -1870,7 +1879,7 @@ pre.content {
   align-items:center
 }
 .source-actions select {
-  font-size:11px;
+  font-size:12px;
   padding:7px;
   min-height:34px
 }
@@ -1885,7 +1894,7 @@ pre.content {
   justify-content:space-between;
   align-items:center;
   margin-bottom:20px;
-  font-size:11px
+  font-size:12px
 }
 .document-main {
   display:grid;
@@ -1907,7 +1916,7 @@ pre.content {
 .review-primary .btn {
   flex:1;
   padding:9px 7px;
-  font-size:11px
+  font-size:12px
 }
 .review-adjust {
   border-top:1px solid var(--line);
@@ -1928,7 +1937,7 @@ pre.content {
   display:flex;
   align-items:center;
   gap:6px;
-  font-size:11px
+  font-size:12px
 }
 .reason {
   font-size:12px;
@@ -1949,7 +1958,7 @@ pre.content {
   padding:12px;
   background:#f2f6f4;
   border-radius:5px;
-  font-size:11px;
+  font-size:12px;
   color:#578271;
   margin-top:18px
 }
@@ -1958,13 +1967,13 @@ pre.content {
   height:15px
 }
 .model-trace,.history-details {
-  font-size:11px;
+  font-size:12px;
   border-top:1px solid var(--line);
   padding-top:14px;
   margin-top:20px
 }
 .trace-item {
-  font-size:11px;
+  font-size:12px;
   padding:12px 0;
   border-bottom:1px solid #eef1f5;
   overflow-wrap:anywhere
@@ -1979,7 +1988,7 @@ pre.content {
   color:var(--muted)
 }
 .trace-item a {
-  font-size:10px
+  font-size:11px
 }
 .attachment-list {
   padding:0 24px
@@ -2009,11 +2018,11 @@ pre.content {
 .attachment-actions {
   display:flex;
   gap:18px;
-  font-size:11px;
+  font-size:12px;
   margin:10px 0
 }
 .attachment-item details {
-  font-size:11px
+  font-size:12px
 }
 .inline-empty {
   padding:25px;
@@ -2034,7 +2043,7 @@ pre.content {
 .settings-step>span {
   color:#9c896a;
   font-size:12px;
-  font-family:Arial,sans-serif;
+  font-family:var(--font);
   padding-top:2px
 }
 .settings-step h3 {
@@ -2042,7 +2051,7 @@ pre.content {
   margin-bottom:6px
 }
 .settings-step p {
-  font-size:11px;
+  font-size:12px;
   color:var(--muted);
   line-height:1.9
 }
@@ -2053,7 +2062,7 @@ pre.content {
   margin-top:20px
 }
 .settings-check .btn {
-  font-size:11px;
+  font-size:12px;
   width:100%
 }
 .config-status {
@@ -2068,7 +2077,7 @@ pre.content {
   color:#6585a5
 }
 .form-field small {
-  font-size:10px;
+  font-size:11px;
   color:var(--muted);
   font-weight:400;
   line-height:1.8
@@ -2102,11 +2111,11 @@ pre.content {
 }
 .table-caption span {
   color:var(--muted);
-  font-size:10px
+  font-size:11px
 }
 @media(max-width:700px) {
   .detail-toolbar {
-    font-size:10px
+    font-size:11px
   }
   .source-actions {
     flex-direction:column;
@@ -2134,7 +2143,7 @@ pre.content {
     flex-wrap:wrap
   }
   .document-label {
-    font-size:10px
+    font-size:11px
   }
 }
 .settings-aside {
@@ -2154,7 +2163,7 @@ pre.content {
   margin-top:0
 }
 .meta-line>span {
-  font-size:11px;
+  font-size:12px;
   color:#7b8a9b
 }
 
@@ -2169,7 +2178,7 @@ pre.content {
 .review-form textarea {width:100%;display:block;margin:8px 0 12px;}
 
 /* 一键全国采集入口（2026-09-13） */
-.batch-actions { border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:22px; background:var(--soft, #f8fafc) }
+.batch-actions { border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:22px; background:var(--soft) }
 .batch-actions form { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:12px }
 .batch-actions h2 { margin:0 0 4px }
 .batch-actions p { margin:0 }
@@ -2184,7 +2193,7 @@ pre.content {
 .region-chip { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); border-radius:999px; padding:7px 14px; color:var(--ink); font-size:13px; transition:border-color .2s,transform .2s }
 .region-chip:hover { border-color:#bbc9d7; transform:translateY(-1px) }
 .region-name { font-weight:500 }
-.region-count { background:#edf2f8; color:#587898; border-radius:999px; padding:1px 8px; font-size:11px; font-variant-numeric:tabular-nums }
+.region-count { background:#edf2f8; color:#587898; border-radius:999px; padding:1px 8px; font-size:12px; font-variant-numeric:tabular-nums }
 .region-chip-more { color:var(--blue); border-style:dashed }
 
 .province-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:14px; margin-bottom:28px }
@@ -2196,16 +2205,16 @@ pre.content {
 .province-top { display:flex; align-items:baseline; justify-content:space-between; gap:10px }
 .province-top h3 { margin:0; font-size:15px; font-weight:600 }
 .province-total { font-size:19px; font-weight:600; color:var(--navy); font-variant-numeric:tabular-nums }
-.province-total small { font-size:11px; font-weight:400; color:var(--muted); margin-left:2px }
+.province-total small { font-size:12px; font-weight:400; color:var(--muted); margin-left:2px }
 .province-cats { display:flex; gap:6px; margin:11px 0 10px; flex-wrap:wrap }
-.province-cat { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); background:#f5f7fa; border-radius:4px; padding:2px 7px }
+.province-cat { display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--muted); background:#f5f7fa; border-radius:4px; padding:2px 7px }
 .province-cat b { font-weight:600; font-variant-numeric:tabular-nums }
 .province-cat.c-guide b { color:#577b9f }
 .province-cat.c-access b { color:#8a6a3d }
 .province-cat.c-guarantee b { color:#548772 }
 .province-cat.c-incentive b { color:#8c5a56 }
 .province-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid var(--line); padding-top:9px }
-.province-date { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums }
+.province-date { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums }
 .region-hint { margin:0; padding-left:1.3em }
 .region-hint li { margin-bottom:6px; font-size:13px }
 @media (max-width:760px) { .province-grid, .province-grid-wide { grid-template-columns:1fr 1fr } }
@@ -2228,15 +2237,15 @@ pre.content {
 .todo-card.scope     { border-left-color:#7a6ba8; background:#fbfafe }
 .todo-top { display:flex; align-items:baseline; justify-content:space-between; gap:8px }
 .todo-name { font-size:15px; font-weight:600 }
-.todo-owner { font-size:11px; color:var(--muted); background:#f0f4f8; border-radius:3px; padding:1px 7px; white-space:nowrap }
+.todo-owner { font-size:12px; color:var(--muted); background:#f0f4f8; border-radius:3px; padding:1px 7px; white-space:nowrap }
 .todo-card.candidate .todo-owner { background:#eaf2f9; color:#48748f }
 .todo-card.review .todo-owner { background:#faeeed; color:#a8605a }
 .todo-card.scope .todo-owner { background:#f0eefa; color:#6b5c9a }
 .todo-value { font-size:26px; font-weight:600; color:var(--navy); line-height:1.25; margin:6px 0 2px;
   font-variant-numeric:tabular-nums }
-.todo-value small { font-size:11px; font-weight:400; color:var(--muted); margin-left:3px }
+.todo-value small { font-size:12px; font-weight:400; color:var(--muted); margin-left:3px }
 .todo-note { font-size:12px; color:var(--muted); line-height:1.55 }
-.todo-sample { font-size:11px; color:#8a97a6; border-top:1px solid var(--line); margin-top:9px; padding-top:8px }
+.todo-sample { font-size:12px; color:#8a97a6; border-top:1px solid var(--line); margin-top:9px; padding-top:8px }
 .todo-sample-none { font-style:italic }
 .todo-summary { font-size:12px; color:var(--muted); margin:0 0 26px }
 .todo-panel { border-top:3px solid var(--line) }
@@ -2246,7 +2255,7 @@ pre.content {
 .todo-panel.review    { border-top-color:var(--red) }
 .todo-panel.scope     { border-top-color:#7a6ba8 }
 .todo-owner-inline { font-size:12px; font-weight:400; color:var(--muted); margin-left:6px }
-.todo-chip { display:inline-block; font-size:10px; line-height:1.8; padding:2px 8px; border-radius:3px;
+.todo-chip { display:inline-block; font-size:11px; line-height:1.8; padding:2px 8px; border-radius:3px;
   white-space:nowrap; background:#edf2f8; color:#587898 }
 .todo-chip.material  { background:#faf6ec; color:#8a6a3d }
 .todo-chip.system    { background:#f1f3f6; color:#67707e }
@@ -2264,10 +2273,10 @@ pre.content {
 .model-state .dot.idle { background:#c08a3e; box-shadow:0 0 0 4px #f8f0e2 }
 .model-state-text { flex:1; min-width:240px }
 .model-state-text h2 { font-size:15px; margin-bottom:6px }
-.model-state-text p { font-size:11px; color:var(--muted); line-height:1.9 }
+.model-state-text p { font-size:12px; color:var(--muted); line-height:1.9 }
 .model-kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; padding:18px 26px;
   margin-bottom:22px; background:#fff; border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow) }
-.model-kv div { font-size:11px; color:var(--muted) }
+.model-kv div { font-size:12px; color:var(--muted) }
 .model-kv strong { display:block; font-size:12px; font-weight:500; color:var(--ink); margin-top:6px; word-break:break-all }
 
 /* ── 列表页：表头排序 + 分页跳页（2026-09-16）────────────────────
@@ -2279,9 +2288,9 @@ table.list th a.th-sort { display:inline-flex; align-items:center; gap:5px; colo
   font:inherit; text-decoration:none; cursor:pointer }
 table.list th a.th-sort:hover { color:#2c4a6b }
 table.list th a.th-sort.on { color:#2c4a6b; font-weight:500 }
-table.list th .sort-mark { font-size:10px; line-height:1; color:#c3ccd6 }
+table.list th .sort-mark { font-size:11px; line-height:1; color:#c3ccd6 }
 table.list th a.th-sort.on .sort-mark { color:#b09564 }
-table.list th a.th-sort:focus-visible { outline:2px solid #b09564; outline-offset:2px; border-radius:3px }
+table.list th a.th-sort:focus-visible { outline:2px solid var(--brand-ring); outline-offset:2px; border-radius:3px }
 td.td-status { white-space:nowrap }
 td.td-status .dim { margin-left:6px }
 
@@ -2291,14 +2300,14 @@ td.td-status .dim { margin-left:6px }
 .pager .pg b { color:#3c4a5a; font-weight:500; font-variant-numeric:tabular-nums }
 .pager-nav { display:inline-flex; align-items:center; gap:7px }
 .pager .btn.off { opacity:.4; cursor:not-allowed }
-.pg-per, .pg-jump { display:inline-flex; align-items:center; gap:7px; font-size:11px; color:#8290a0 }
+.pg-per, .pg-jump { display:inline-flex; align-items:center; gap:7px; font-size:12px; color:#8290a0 }
 .pg-per label, .pg-jump label { display:inline-flex; align-items:center; gap:5px; margin:0 }
-.pg-per select { padding:4px 7px; font-size:11px; border:1px solid var(--line); border-radius:4px;
+.pg-per select { padding:4px 7px; font-size:12px; border:1px solid var(--line); border-radius:4px;
   background:#fff; color:var(--ink) }
-.pg-jump input[type=number] { width:58px; padding:4px 6px; font-size:11px; text-align:center;
+.pg-jump input[type=number] { width:58px; padding:4px 6px; font-size:12px; text-align:center;
   border:1px solid var(--line); border-radius:4px; background:#fff; color:var(--ink);
   font-variant-numeric:tabular-nums }
-.pg-per select:focus-visible, .pg-jump input:focus-visible { outline:2px solid #b09564; outline-offset:1px }
+.pg-per select:focus-visible, .pg-jump input:focus-visible { outline:2px solid var(--brand-ring); outline-offset:1px }
 
 /* 只给读屏用的说明文字（例如表头最后一列的"操作"） */
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
@@ -2325,5 +2334,5 @@ table.list.wide { min-width:940px }
 .diag-item .diag-head strong { font-size:12px; font-weight:500; color:var(--ink);
   font-variant-numeric:tabular-nums }
 .diag-item p { margin:0; font-size:12px; line-height:1.65; color:#4d5b6b }
-.diag-item .diag-sites { margin-top:6px; font-size:11px; color:#8290a0; word-break:break-all }
+.diag-item .diag-sites { margin-top:6px; font-size:12px; color:#8290a0; word-break:break-all }
 .diag-sub { margin:16px 0 8px; font-size:12px; font-weight:500; color:var(--ink) }

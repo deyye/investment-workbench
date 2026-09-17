@@ -3,12 +3,12 @@
 {% block title %}采集来源 - 投资政策工作台{% endblock %}
 {% block content %}
 {% call page_head('COLLECTION / 来源管理', '采集来源', '归集国家、浙江及外省政策文件，让政策信息持续更新。') %}<a class="btn" href="{{ url_for('runs') }}">{{ icon('activity') }} 查看运行记录</a>{% endcall %}
-<div class="notice">{{ icon('globe') }}<div><h3>从政府官网，归集政策原文</h3><p>可直接「一键全国采集」依次跑完所有已启用来源，也可在下方针对单个来源单独采集。{% if model_ready %}当前使用大模型，Agent按材料状态选择处理动作。{% elif model_enabled %}已启用大模型但未读到密钥，采集会自动回落到本地规则，可在「模型配置」中检查。{% else %}大模型已停用，采集使用本地规则、不产生模型费用；可在「模型配置」中启用。{% endif %}</p></div></div>
+<div class="notice">{{ icon('globe') }}<div><h3>从政府官网，归集政策原文</h3><p>{% if model_ready %}当前使用大模型，按材料状态自动选择处理动作。{% elif model_enabled %}未读到密钥，将回落到本地规则（可在「模型配置」检查）。{% else %}大模型已停用，使用本地规则、不产生模型费用。{% endif %}</p></div></div>
 <section class="panel">
 <div class="batch-actions">
 <form method="post" action="{{ url_for('source_run_all') }}">
 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-<div><h2>一键全国采集</h2><p class="hint">按顺序跑完全部已启用来源（{{ rows|selectattr('enabled')|list|length }} 个）。某一站失败不会中断后面的省份，失败来源会在批次结果里标出。</p></div>
+<div><h2>一键全国采集</h2><p class="hint">依次跑完全部已启用来源（{{ rows|selectattr('enabled')|list|length }} 个）；单个失败不中断整批。</p></div>
 <select name="prefer" aria-label="全国采集分类方式">{% if model_enabled %}<option value="llm">自动处理（推荐）</option>{% endif %}<option value="rule">仅用本地规则{% if not model_enabled %}（大模型已停用）{% endif %}</option></select>
 <button class="btn primary" type="submit">{{ icon('globe') }} 开始全国采集</button>
 </form>
@@ -24,5 +24,5 @@
 <td>{% if s.in_config and s.enabled %}<form class="source-actions" method="post" action="{{ url_for('source_run', name=s.name) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><select name="prefer" aria-label="{{ s.site }}分类方式">{% if model_enabled %}<option value="llm">自动处理（推荐）</option>{% endif %}<option value="rule">仅用本地规则{% if not model_enabled %}（大模型已停用）{% endif %}</option></select><button class="btn primary sm" type="submit">开始采集</button></form>{% else %}<span class="dim">暂不可运行</span>{% endif %}</td>
 </tr>{% endfor %}</tbody></table></div>
 {% else %}{{ empty('尚未登记采集来源', '请检查来源配置后重新启动工作台。', 'globe') }}{% endif %}</section>
-<p class="hint below-panel">每次采集依次完成文件发现、下载解析、分类与去重入库。实际采集质量请结合运行记录和文件复核结果判断。</p>
+
 {% endblock %}

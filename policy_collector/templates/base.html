@@ -8,7 +8,7 @@
 </head><body>
 <a class="skip-link" href="#main-content">跳至主要内容</a>
 <aside class="sidebar" aria-label="主导航">
-<a class="brand" href="{{ url_for('index') }}"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span><strong>投资政策</strong><small>智能归集 · 研究工作台</small></span></a>
+<a class="brand" href="{{ url_for('index') }}"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span><strong>投资政策</strong><small>政策智能归集</small></span></a>
 <nav class="side-nav"><a class="nav-item" href="/">统一工作台</a><a class="nav-item" href="/approval/">审批文件结构化 ↗</a></nav><div class="nav-caption">工作空间 <span>WORKSPACE</span></div>
 <nav class="side-nav">
 {% for endpoint, name, glyph in [('index','工作总览','grid'),('todos','待办清单','check'),('policies','政策资料库','file'),('provinces','省份浏览','flag'),('sources','采集来源','globe'),('runs','处理进度','activity'),('material_quality','材料质量','shield'),('model_settings','模型配置','model'),('maintenance','数据维护','folder')] %}
