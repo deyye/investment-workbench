@@ -2,7 +2,7 @@
 {% from '_ui.html' import icon, page_head %}
 {% block title %}数据维护 - 投资政策工作台{% endblock %}
 {% block content %}
-{{ page_head('MAINTENANCE / 数据维护', '数据维护', '清空本机归集库以便重新采集。每次清空前都会自动备份，来源配置与模型密钥不受影响。') }}
+{{ page_head('数据维护', '清空前自动备份；来源配置与模型密钥不受影响。') }}
 
 {% set LIB = [('policies','政策正文与判定结果'),('attachments','附件记录'),
               ('policy_sources','政策与来源的关联'),('review_events','人工复核留痕'),

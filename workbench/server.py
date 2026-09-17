@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 from flask import Flask, jsonify, redirect, render_template, request
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.serving import run_simple
-from core import llm
+from core import llm, shell
 from core.policy_model import SharedPolicyConfig
 from app.server import Store
 from policy_collector.config import AppConfig, _load_dotenv
@@ -71,6 +71,9 @@ def create_app(data_dir=None, policy_config=None):
     app = Flask(__name__)
     app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
     app.secret_key = secrets.token_hex(32)
+    # 套件条高亮判据（与政策侧共用 core/shell.py 一份实现）。本应用里未匹配到
+    # `/approval` / `/policy` / `/settings` 前缀的就是工作台自己的页（`/`、`/tasks`）。
+    shell.install(app, default='workbench')
     store = Store(data / 'approval')
     app.extensions['approval_store'] = store
     atexit.register(store.executor.shutdown, wait=True)

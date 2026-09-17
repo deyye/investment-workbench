@@ -18,8 +18,13 @@
 {% endif %}</svg>
 {%- endmacro %}
 
-{% macro page_head(eyebrow, title, description) -%}
-<div class="page-head"><div class="page-head-main"><div class="eyebrow">{{ eyebrow }}</div><h1>{{ title }}</h1><p>{{ description }}</p></div>{% if caller is defined %}<div class="page-head-actions">{{ caller() }}</div>{% endif %}</div>
+{#
+  页头只留标题，可选一句说明。
+  标题上方那行英文小标签（eyebrow，形如 "POLICY LIBRARY / 资料管理"）已全部去掉——
+  它是纯装饰，不承载信息。说明段也只在**带操作/风险信息**时才写，不写"这页怎么用"的解说。
+#}
+{% macro page_head(title, description='') -%}
+<div class="page-head"><div class="page-head-main"><h1>{{ title }}</h1>{% if description %}<p>{{ description }}</p>{% endif %}</div>{% if caller is defined %}<div class="page-head-actions">{{ caller() }}</div>{% endif %}</div>
 {%- endmacro %}
 
 {% macro empty(title, description, kind='folder') -%}

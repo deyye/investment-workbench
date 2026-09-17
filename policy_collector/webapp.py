@@ -25,6 +25,8 @@ from urllib.parse import urlencode
 from flask import (Flask, Response, abort, flash, redirect, render_template, request,
                    url_for, g, session, send_file)
 
+from core import shell
+
 from .config import AppConfig
 from .db import Database, POLICY_SORTABLE
 from .pipeline import Pipeline
@@ -136,6 +138,9 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
     app = Flask(__name__)
     app.secret_key = secrets.token_hex(32)
     app.cfg = cfg
+    # 套件条高亮判据（与工作台共用一份实现）。默认值给 'policy'：本应用单独跑时
+    # `script_root` 为空、`path` 是 `/policies`，按前缀一个都对不上，但它确实是政策模块。
+    shell.install(app, default='policy')
 
     def db() -> Database:
         if 'database' not in g:

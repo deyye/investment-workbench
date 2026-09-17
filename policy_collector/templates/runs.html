@@ -7,7 +7,7 @@
 
 {% block title %}处理进度 · 投资政策{% endblock %}
 {% block content %}
-{{ page_head('', '处理进度', '先看正在处理什么，再处理需要你确认的文件。') }}
+{{ page_head('处理进度') }}
 {% if running %}<p class="flash warn" role="status">任务处理中，每4秒更新一次。可离开此页，任务会继续。</p>{% endif %}
 {{ clamp_note(clamped, page_requested, pages) }}
 {% if rows %}

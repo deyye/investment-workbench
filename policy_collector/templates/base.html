@@ -1,6 +1,11 @@
 {% from '_ui.html' import icon %}
 {% set page_names = {'index':'工作总览','policies':'政策资料库','policy_detail':'政策详情','todos':'待办清单','provinces':'省份浏览','sources':'采集来源','runs':'处理进度','run_detail':'处理过程','model_settings':'模型配置','material_quality':'材料质量','maintenance':'数据维护'} %}
-{% set suite_nav = [('/', '工作台'), ('/approval/', '审批文件'), ('/policy/', '政策归集'), ('/settings/model', '模型设置')] %}
+{% set suite_nav = [('workbench','/','工作台'),('approval','/approval/','审批文件'),('policy','/policy/','政策归集'),('settings','/settings/model','模型设置')] %}
+{# 当前在哪个模块由 core/shell.py 统一判定，判据用 script_root + path。
+   这里曾自己写 `request.path.startswith(href...)`：本应用挂在 /policy 下，
+   request.path 只有 PATH_INFO，于是 /policy/ 判成 '/'（高亮停在"工作台"）、
+   /policy/policies 一个都不匹配（没有高亮）。别再在模板里重写这套判断。 #}
+{% set module = current_module(request) %}
 <!DOCTYPE html><html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#142e4c">
@@ -12,13 +17,12 @@
 <header class="suite-bar">
 <a class="suite-brand" href="/"><span class="suite-mark" aria-hidden="true">研</span>投资项目智能工作台</a>
 <nav class="suite-nav" aria-label="全局导航">
-{% for href, name in suite_nav %}{% set on = (request.path == '/') if href == '/' else request.path.startswith(href.rstrip('/')) %}<a href="{{ href }}"{% if on %} aria-current="page"{% endif %}>{{ name }}</a>{% endfor %}</nav>
+{% for key, href, name in suite_nav %}<a href="{{ href }}"{% if module == key %} aria-current="page"{% endif %}>{{ name }}</a>{% endfor %}</nav>
 <div class="suite-meta"><time id="today"></time></div>
 </header>
 <div class="shell-body">
 {# L1 左栏：只放本模块的页，跨模块的入口已上移到套件条 #}
 <aside class="sidebar" aria-label="模块导航">
-<div class="side-caption">工作空间 <span>WORKSPACE</span></div>
 <nav class="side-nav">
 {% for endpoint, name, glyph in [('index','工作总览','grid'),('todos','待办清单','check'),('policies','政策资料库','file'),('provinces','省份浏览','flag'),('sources','采集来源','globe'),('runs','处理进度','activity'),('material_quality','材料质量','shield'),('model_settings','模型配置','model'),('maintenance','数据维护','folder')] %}
 {% set active = request.endpoint == endpoint or (endpoint == 'policies' and request.endpoint == 'policy_detail') or (endpoint == 'runs' and request.endpoint == 'run_detail') %}

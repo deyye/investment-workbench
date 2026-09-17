@@ -400,3 +400,97 @@ TMPDIR=/tmp/pytmp NO_PROXY=127.0.0.1,localhost ./.venv/bin/python -m pytest test
   三端快照内联样式已核对一致：`.suite-brand` / `.suite-nav a` / 全局 `a` 基线 **三端全有**。
 - 结论：**这类缺陷的通用对策是加"结构级"守卫**（列数、每个节点类型、每条 CSS 声明的存在性），
   而不是靠人反复看页面。守卫要**做反向验证**，确认它在该缺陷复现时确实会红。
+
+---
+
+## 追加轮次：套件条高亮判据统一 + 装饰性文案清除（2026-09-17 下午）
+
+用户截图反馈两条：① 点「政策归集」后，顶部套件条高亮还停在「工作台」；
+② 一批装饰性文案（`工作空间 WORKSPACE`、`POLICY LIBRARY / 资料管理`、
+`工作台 WORKBENCH`、`REGIONS / 地区分布`、`先看正在处理什么，再处理需要你确认的文件。`）
+不该保留。两条都属"页面 200、测试全绿、只有肉眼看得出"。
+
+### 一、套件条高亮：模板里自己写的路径前缀判据漏了挂载前缀
+
+**根因**：政策子应用被 `DispatcherMiddleware` 挂在 `/policy` 下，WSGI 把它拆成
+`SCRIPT_NAME='/policy'` + `PATH_INFO='/policies'`，而 **Flask 的 `request.path` 只有
+PATH_INFO，不含挂载前缀**。政策侧 `base.html` 却自己内联了一套判据：
+
+```jinja
+{% set on = (request.path == '/') if href == '/' else request.path.startswith(href.rstrip('/')) %}
+```
+
+于是（实测，非推断）：
+
+| 访问地址 | 政策应用看到的 `request.path` | 结果 |
+| --- | --- | --- |
+| `/policy/` | `/` | 命中 `href == '/'` 那条 → **高亮停在「工作台」** |
+| `/policy/policies` | `/policies` | 四条都不匹配 → **一个高亮都没有** |
+| `/policy/todos` | `/todos` | 同上 |
+
+工作台侧当时写的是另一套（`{% if request.path.startswith('/approval') %}` 一串），
+两套判据各写一份——这正是**同一个不变量被实现了两遍**的老问题。
+
+**修复**：判据抽到 `core/shell.py`（core 只依赖标准库，政策侧引它不引入耦合）：
+
+```python
+def current_module(script_root, path, default='workbench'):
+    full = f'{script_root or ""}{path or ""}'      # ← 必须两段相加
+    for name, prefix in PREFIXES:
+        if full == prefix or full.startswith(prefix + '/'):
+            return name
+    return default
+```
+
+`install(app, default)` 把它装成 Jinja 全局，模板里只写 `{% set module = current_module(request) %}`。
+`default` 兜住"没匹配上任何前缀"：工作台应用里就是工作台（`/`、`/tasks`），
+政策应用里就是政策（政策单独跑时 `script_root` 为空、`path` 是 `/policies`）。
+
+**守卫**（`tests/integration/test_workbench.py`）：
+
+- `test_suite_nav_highlights_exactly_one_module[...]`（12 页参数化）：
+  每页套件条**恰好一项**高亮，且 `href` 等于该页所属模块。这条比原来的
+  `test_workbench_nav_marks_current_page`（只覆盖 3 页）强在**覆盖政策全部子页**。
+- `test_module_detection_uses_script_root`：判据本身单测，含挂载前缀与默认值两条分支。
+
+**反向验证**：把政策侧判据改回旧写法，**7 个用例立刻报错**
+（`assert ['/'] == ['/policy/']`）；恢复后全绿。
+
+### 二、装饰性文案清除
+
+**清掉的东西**（都是"零信息量的装饰"）：
+
+| 类型 | 位置 | 处置 |
+| --- | --- | --- |
+| `side-caption`（左栏中英对照小标题） | 工作台/政策 base.html + 三份 CSS | HTML 删除，CSS 一并删（审批侧那份本就是孤儿） |
+| `eyebrow`（标题上方英文小标签） | 政策 `_ui.html` 宏 + 8 个页面、工作台 3 个页面、审批静态页 | 全部删除；宏签名改为 `page_head(title, description='')` |
+| 页面标题下的解说句 | 政策 10 处的描述参数、工作台任务页/设置页 | 删（只留带操作/风险信息的，见下） |
+
+**刻意保留的两处**（符合"小字只留操作/风险提示"）：
+
+- 数据维护页：`清空前自动备份；来源配置与模型密钥不受影响。`——风险提示。
+- 任务进度页：`此页每 5 秒自动更新。`——操作信息（影响用户要不要手动刷新）。
+- 模型设置页原有的"保存后立即生效"并入已有的密钥/生效范围说明段落，不再单占一行页头副标题。
+
+**连带清理**：审批 CSS 里 `.side-nav` / `.nav-item*` 共 8 条规则是死代码
+（审批的 L1 是"项目文件"栏，不是导航，HTML/JS 里一个都没有）；
+政策/工作台左栏去掉 caption 后 `.side-nav` 顶上要自己留白，改为 `padding:16px 10px 12px`。
+
+**守卫**：`test_authored_shell_text_is_gone`——13 个页面逐一断言不含
+`WORKSPACE`/`WORKBENCH`/`POLICY LIBRARY`/`OVERVIEW`/`REGIONS` 等标签与 `side-caption`。
+**反向验证**：给任务进度页加回 `<div class="eyebrow">处理记录</div>`，守卫报错。
+
+### 验证
+
+- 全量 **471 passed / 10 skipped**（上一轮 457 → 本轮 **+14**：12 个套件条高亮 + 1 个判据单测 + 1 个文案守卫）。
+- 逐页核对脚本：13 个页面「装饰标签 0 命中、页头无空壳」；仍保留说明段的只剩 4 处，
+  其中两处是上表保留项，另两处是首页 hero 副标题与审批页会被 JS 覆写的项目代码占位（功能性）。
+- 离线快照 `verify-shell/` 重生成，索引页写明本轮两个核对点。
+
+### 一条可复用的判断：什么时候该把判据抽成一份
+
+两个模块**共用一个 UI 组件**（外壳、导航、分页条），而该组件的某个行为需要"算出来"
+（当前模块、当前页码、参数保留），就**不能各写一份**——哪怕两份看上去都"挺简单"。
+本仓库为此已经栽过三次：分页查询串（三页各写一份）、外壳 CSS 基线（某一端删了唯一兜底）、
+套件条高亮判据（两份实现，一份漏了挂载前缀）。
+**判据只有一份时，缺陷最多只出现在一个地方；有两份时，缺陷会躲在"看起来也没问题"的那一份后面。**

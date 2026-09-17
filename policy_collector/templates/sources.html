@@ -2,7 +2,7 @@
 {% from '_ui.html' import icon, page_head, empty %}
 {% block title %}采集来源 - 投资政策工作台{% endblock %}
 {% block content %}
-{% call page_head('COLLECTION / 来源管理', '采集来源', '归集国家、浙江及外省政策文件，让政策信息持续更新。') %}<a class="btn" href="{{ url_for('runs') }}">{{ icon('activity') }} 查看运行记录</a>{% endcall %}
+{% call page_head('采集来源') %}<a class="btn" href="{{ url_for('runs') }}">{{ icon('activity') }} 查看运行记录</a>{% endcall %}
 <div class="notice">{{ icon('globe') }}<div><h3>从政府官网，归集政策原文</h3><p>{% if model_ready %}当前使用大模型，按材料状态自动选择处理动作。{% elif model_enabled %}未读到密钥，将回落到本地规则（可在「模型配置」检查）。{% else %}大模型已停用，使用本地规则、不产生模型费用。{% endif %}</p></div></div>
 <section class="panel">
 <div class="batch-actions">

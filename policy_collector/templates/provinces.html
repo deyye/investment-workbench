@@ -2,7 +2,7 @@
 {% from '_ui.html' import icon, page_head, empty %}
 {% block title %}按省份浏览 · 投资政策{% endblock %}
 {% block content %}
-{% call page_head('REGIONS / 地区分布', '按省份浏览', '按地区查看已归集的政策文件，避免全部混在一个列表里。') %}
+{% call page_head('按省份浏览') %}
 <a class="btn" href="{{ url_for('policies') }}">{{ icon('file') }} 全部资料</a>
 {% endcall %}
 

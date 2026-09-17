@@ -2,12 +2,10 @@
    三份 base 改一份要想另两份——L0 套件条放跨模块入口，L1 左栏只放本模块的页。 #}
 {% set page_names = {'index':'首页','tasks':'任务进度','model_page':'模型设置'} %}
 {% set suite_nav = [('workbench','/','工作台'),('approval','/approval/','审批文件'),('policy','/policy/','政策归集'),('settings','/settings/model','模型设置')] %}
-{# 当前在哪个模块：套件条高亮靠它，而不是靠"路径前缀碰巧相同"——/tasks 也属于工作台，
-   但它不以 / 之外的前缀开头，按前缀判会一个都不高亮。 #}
-{% if request.path.startswith('/approval') %}{% set module = 'approval' %}
-{% elif request.path.startswith('/policy') %}{% set module = 'policy' %}
-{% elif request.path.startswith('/settings') %}{% set module = 'settings' %}
-{% else %}{% set module = 'workbench' %}{% endif %}
+{# 当前在哪个模块由 core/shell.py 统一判定——不要在这里再写一套路径前缀判断。
+   判据必须用 script_root + path：政策子应用挂在 /policy 下时 request.path 不含前缀，
+   自己写 startswith 会漏（这正是"点政策归集，高亮还停在工作台"的原因）。 #}
+{% set module = current_module(request) %}
 <!doctype html><html lang="zh-CN"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#142e4c">
@@ -25,7 +23,6 @@
 <div class="shell-body">
 {# L1 左栏：只放工作台自己的页；模型设置是两端共用的，留在套件条，不在这里重复一个入口 #}
 <aside class="sidebar" aria-label="模块导航">
-<div class="side-caption">工作台 <span>WORKBENCH</span></div>
 <nav class="side-nav">
 {% for href, name, glyph in [('/', '首页', 'home'), ('/tasks', '任务进度', 'activity')] %}
 {% set active = (request.endpoint == 'index') if href == '/' else request.path.startswith(href) %}

@@ -4,7 +4,7 @@
 {% from '_diagnostics.html' import parse_diagnostics %}
 {% block title %}材料质量 - 投资政策工作台{% endblock %}
 {% block content %}
-{{ page_head('MATERIAL QUALITY / 资料核验','材料质量','分别查看原件留存与正文解析情况，定位影响政策判断的材料缺口。') }}
+{{ page_head('材料质量') }}
 {{ clamp_note(clamped, page_requested, pages) }}
 <div class="metrics-grid">{% for name,value in [('当前版本附件',report.attachments),('原件下载并校验',report.download_ok),('解析检查通过',report.parse_complete),('待处理政策',report.affected_policies)] %}<div class="metric"><div class="metric-top">{{ name }}</div><div class="metric-value">{{ value }}</div></div>{% endfor %}</div>
 

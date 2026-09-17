@@ -108,56 +108,6 @@
   background:var(--soft);
   border-right:1px solid var(--line)
 }
-.side-caption {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin:0;
-  padding:16px 18px 9px;
-  color:var(--muted);
-  font-size:11px;
-  letter-spacing:1.4px
-}
-.side-caption span {
-  font-size:11px;
-  letter-spacing:1.6px;
-  opacity:.72
-}
-.side-nav {
-  display:flex;
-  flex-direction:column;
-  gap:2px;
-  padding:0 10px
-}
-.nav-item {
-  position:relative;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:9px 10px;
-  border-radius:var(--r-sm);
-  color:#35485f;
-  font-size:13px
-}
-.nav-item .icon {
-  width:17px;
-  height:17px;
-  flex:none;
-  opacity:.78
-}
-.nav-item:hover {
-  color:var(--ink);
-  background:#e9eef5
-}
-.nav-item.active {
-  color:var(--brand);
-  background:var(--brand-soft);
-  font-weight:600
-}
-.nav-item.active .icon {
-  opacity:1
-}
 .nav-indicator {
   margin-left:auto;
   width:5px;
@@ -180,7 +130,7 @@
   font-weight:600
 }
 
-/* ---- L2 页头：面包屑 + eyebrow + 标题 + 说明 + 右侧操作 ---- */
+/* ---- L2 页头：面包屑 + 标题（+ 可选的说明，只在带操作/风险信息时写） + 右侧操作 ---- */
 .page-head {
   display:flex;
   align-items:flex-end;
@@ -203,12 +153,6 @@
 .breadcrumb strong {
   color:var(--ink);
   font-weight:500
-}
-.page-head .eyebrow {
-  color:var(--muted);
-  font-size:11px;
-  font-weight:500;
-  letter-spacing:2px
 }
 .page-head h1 {
   margin:7px 0 0;
@@ -290,19 +234,6 @@
     border-right:0;
     border-bottom:1px solid var(--line);
     overflow:visible
-  }
-  .side-nav {
-    flex-direction:row;
-    padding:0 10px 10px;
-    overflow-x:auto
-  }
-  .nav-item {
-    flex:1;
-    min-width:72px;
-    flex-direction:column;
-    gap:6px;
-    padding:10px 6px;
-    font-size:11px
   }
   .nav-indicator {
     display:none

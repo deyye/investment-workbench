@@ -2,7 +2,7 @@
 {% from '_ui.html' import icon, page_head %}
 {% block title %}模型配置 - 投资政策工作台{% endblock %}
 {% block content %}
-{{ page_head('MODEL SERVICE / 智能支撑', '模型配置', '接入主流大模型服务，并在需要时一键启用或停用。停用后采集一律使用本地规则。') }}
+{{ page_head('模型配置') }}
 {% set cur = (providers | selectattr('name', 'equalto', state.provider) | first) or providers[0] %}
 
 <section class="panel model-state">

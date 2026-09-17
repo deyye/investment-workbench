@@ -2,7 +2,7 @@
 {% from '_ui.html' import icon, page_head, empty %}
 {% block title %}待办清单 · 投资政策{% endblock %}
 {% block content %}
-{% call page_head('TODO / 该谁做什么', '待办清单', '按"谁能解决"分开——机器能修的、运维要配的、只有人能判的。不必都堆给你看。') %}
+{% call page_head('待办清单') %}
 <a class="btn" href="{{ url_for('policies') }}">{{ icon('file') }} 全部资料</a>
 {% endcall %}
 

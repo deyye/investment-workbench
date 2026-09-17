@@ -105,27 +105,12 @@
   background:var(--soft);
   border-right:1px solid var(--line)
 }
-.side-caption {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin:0;
-  padding:16px 18px 9px;
-  color:var(--muted);
-  font-size:11px;
-  letter-spacing:1.4px
-}
-.side-caption span {
-  font-size:11px;
-  letter-spacing:1.6px;
-  opacity:.72
-}
+/* 顶部留白写在这里：左栏的 side-caption 已去掉，没有它就没有上边距 */
 .side-nav {
   display:flex;
   flex-direction:column;
   gap:2px;
-  padding:0 10px
+  padding:16px 10px 12px
 }
 .nav-item {
   position:relative;
@@ -177,7 +162,7 @@
   font-weight:600
 }
 
-/* ---- L2 页头：面包屑 + eyebrow + 标题 + 说明 + 右侧操作 ---- */
+/* ---- L2 页头：面包屑 + 标题（+ 可选的说明，只在带操作/风险信息时写） + 右侧操作 ---- */
 .page-head {
   display:flex;
   align-items:flex-end;
@@ -200,12 +185,6 @@
 .breadcrumb strong {
   color:var(--ink);
   font-weight:500
-}
-.page-head .eyebrow {
-  color:var(--muted);
-  font-size:11px;
-  font-weight:500;
-  letter-spacing:2px
 }
 .page-head h1 {
   margin:7px 0 0;
@@ -343,7 +322,6 @@ a{color:inherit;text-decoration:none}
 .intro{padding:12px 0 34px}
 /* 首页是套件落地页，保留大标题这一处例外；其余页头一律走 .page-head */
 .intro h1{font-size:46px;line-height:1.3;letter-spacing:-1.5px;margin:18px 0}
-.intro .eyebrow{font-size:12px;font-weight:700;letter-spacing:3px;color:var(--brand)}
 h1 span{color:var(--brand)}
 p{color:var(--muted)}
 .intro>p{font-size:16px}

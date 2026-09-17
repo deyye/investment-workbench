@@ -2,7 +2,7 @@
 {% from '_ui.html' import icon, page_head, empty, status %}
 {% block title %}工作总览 · 投资政策{% endblock %}
 {% block content %}
-{% call page_head('OVERVIEW / 工作空间', '工作总览', '汇集政策资料，掌握采集进展，有序开展投资政策研究。') %}<a class="btn primary" href="{{ url_for('sources') }}">{{ icon('globe') }} 开始采集</a>{% endcall %}<section class="panel agent-progress"><h2>今天先做什么？</h2><div class="form-actions"><a class="btn primary" href="{{ url_for('sources') }}">1. 采集文件</a><a class="btn" href="{{ url_for('runs') }}">2. 查看处理进度</a><a class="btn" href="{{ url_for('todos') }}">3. 处理待办清单</a></div>
+{% call page_head('工作总览') %}<a class="btn primary" href="{{ url_for('sources') }}">{{ icon('globe') }} 开始采集</a>{% endcall %}<section class="panel agent-progress"><h2>今天先做什么？</h2><div class="form-actions"><a class="btn primary" href="{{ url_for('sources') }}">1. 采集文件</a><a class="btn" href="{{ url_for('runs') }}">2. 查看处理进度</a><a class="btn" href="{{ url_for('todos') }}">3. 处理待办清单</a></div>
 <form method="post" action="{{ url_for('source_run_all') }}" class="inline-run"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="prefer" value="llm"><button class="btn" type="submit">{{ icon('globe') }} 一键全国采集（{{ stats.sources_enabled }} 个来源）</button><span class="hint">可离开此页；单个来源失败不影响整批。</span></form>
 </section>
 <div class="metrics-grid">

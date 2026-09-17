@@ -296,6 +296,64 @@ def test_workbench_nav_marks_current_page(suite):
             f'{path} 左栏高亮到了 {side_marked}'
 
 
+# --- 套件条高亮：政策子应用被挂在 /policy 下，判据必须带挂载前缀 ---------------
+# 起因：政策侧 base.html 自己写了一套 `request.path.startswith(...)`。
+# WSGI 把 /policy/policies 拆成 SCRIPT_NAME='/policy' + PATH_INFO='/policies'，
+# 而 Flask 的 request.path **只有 PATH_INFO**，于是：
+#   /policy/        → request.path == '/' → 命中工作台那条 → 高亮停在"工作台"
+#   /policy/todos   → request.path == '/todos' → 四条都不中 → 一个高亮都没有
+# 症状同样是"页面 200、测试全绿、只有肉眼看得出"。现在判据统一在 core/shell.py。
+SUITE_HIGHLIGHT = {
+    '/': '/', '/tasks': '/', '/settings/model': '/settings/model', '/approval/': '/approval/',
+    '/policy/': '/policy/', '/policy/policies': '/policy/', '/policy/todos': '/policy/',
+    '/policy/provinces': '/policy/', '/policy/sources': '/policy/', '/policy/runs': '/policy/',
+    '/policy/quality': '/policy/', '/policy/maintenance': '/policy/',
+}
+
+
+@pytest.mark.parametrize('path,expected', sorted(SUITE_HIGHLIGHT.items()))
+def test_suite_nav_highlights_exactly_one_module(suite, path, expected):
+    """每页的套件条必须**恰好一项**高亮，且就是当前模块——不是 0 项，也不是别家。"""
+    _, client, _ = suite
+    soup = BeautifulSoup(client.get(path).data, 'html.parser')
+    items = soup.select('header.suite-bar .suite-nav a')
+    assert len(items) == 4, f'{path} 套件条应有 4 项跨模块入口'
+    marked = [a['href'] for a in items if a.get('aria-current') == 'page']
+    assert marked == [expected], f'{path} 套件条高亮到了 {marked}，应该是 {[expected]}'
+
+
+def test_module_detection_uses_script_root():
+    """判据本身单测：挂载前缀必须算进去，默认值只在没匹配上前缀时生效。"""
+    from core.shell import current_module
+    # 挂在 /policy 下：script_root 带前缀、path 是去掉前缀的部分
+    assert current_module('/policy', '/') == 'policy'
+    assert current_module('/policy', '/policies') == 'policy'
+    assert current_module('/policy', '/settings/model') == 'policy'   # 政策侧自己的路由
+    assert current_module('', '/approval/x') == 'approval'
+    assert current_module('', '/settings/model') == 'settings'
+    # 没匹配上前缀 → 走调用方给的默认值（工作台应用=workbench，政策应用=policy）
+    assert current_module('', '/') == 'workbench'
+    assert current_module('', '/tasks') == 'workbench'
+    assert current_module('', '/policies', default='policy') == 'policy'
+
+
+def test_authored_shell_text_is_gone(suite):
+    """页头的英文装饰标签与左栏中英对照小标题，三端都不该再出现。
+
+    这些是纯装饰：`POLICY LIBRARY / 资料管理` 这类 eyebrow 不承载任何信息，
+    `工作台 WORKBENCH` 这类 side-caption 只是把模块名写两遍。
+    """
+    _, client, _ = suite
+    banned = ['WORKSPACE', 'WORKBENCH', 'POLICY LIBRARY', 'OVERVIEW', 'REGIONS',
+              'MAINTENANCE /', 'MODEL SERVICE', 'MATERIAL QUALITY', 'COLLECTION /',
+              'TODO /']
+    for path in SUITE_HIGHLIGHT:
+        html = client.get(path).get_data(as_text=True)
+        hit = [t for t in banned if t in html]
+        assert not hit, f'{path} 仍有装饰性英文标签：{hit}'
+        assert 'side-caption' not in html, f'{path} 仍有左栏中英对照小标题'
+
+
 def test_settings_back_button_reachable_from_policy_sidebar(suite):
     """端到端：政策库 → 侧栏「模型配置」→ 设置页 → 返回，应回到原筛选状态。"""
     app, client, _ = suite
