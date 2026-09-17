@@ -19,7 +19,7 @@
 {%- endmacro %}
 
 {% macro page_head(eyebrow, title, description) -%}
-<div class="page-heading"><div><div class="eyebrow">{{ eyebrow }}</div><h1>{{ title }}</h1><p>{{ description }}</p></div>{% if caller is defined %}<div class="heading-action">{{ caller() }}</div>{% endif %}</div>
+<div class="page-head"><div class="page-head-main"><div class="eyebrow">{{ eyebrow }}</div><h1>{{ title }}</h1><p>{{ description }}</p></div>{% if caller is defined %}<div class="page-head-actions">{{ caller() }}</div>{% endif %}</div>
 {%- endmacro %}
 
 {% macro empty(title, description, kind='folder') -%}

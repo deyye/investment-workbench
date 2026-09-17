@@ -1,7 +1,47 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}投资项目智能工作台{% endblock %}</title><link rel="stylesheet" href="/static/workbench.css"></head><body><header class="top"><a class="brand" href="/"><span class="mark">研</span>投资项目智能工作台</a><nav aria-label="工作台导航">
-{# 当前页要说出来。此前五项长得一模一样，进了模型设置既看不出在设置里，
-   也看不出旁边还有哪几个地方可去——"回不去"有一半是"不知道自己在哪"。 #}
-{% for href, name in [('/', '首页'), ('/approval/', '审批文件'), ('/policy/', '政策归集'), ('/tasks', '任务进度'), ('/settings/model', '模型设置')] %}
-{% set active = (request.path == href) if href == '/' else request.path.startswith(href.rstrip('/')) %}
-<a href="{{ href }}"{% if active %} aria-current="page"{% endif %}>{{ name }}</a>
-{% endfor %}</nav></header><main class="container">{% block content %}{% endblock %}</main><footer>原文可追溯 · 结果可复核</footer>{% block scripts %}{% endblock %}</body></html>
+{# 统一外壳 L0–L4：与政策归集、审批文件共用同一套骨架与类名。
+   三份 base 改一份要想另两份——L0 套件条放跨模块入口，L1 左栏只放本模块的页。 #}
+{% set page_names = {'index':'首页','tasks':'任务进度','model_page':'模型设置'} %}
+{% set suite_nav = [('workbench','/','工作台'),('approval','/approval/','审批文件'),('policy','/policy/','政策归集'),('settings','/settings/model','模型设置')] %}
+{# 当前在哪个模块：套件条高亮靠它，而不是靠"路径前缀碰巧相同"——/tasks 也属于工作台，
+   但它不以 / 之外的前缀开头，按前缀判会一个都不高亮。 #}
+{% if request.path.startswith('/approval') %}{% set module = 'approval' %}
+{% elif request.path.startswith('/policy') %}{% set module = 'policy' %}
+{% elif request.path.startswith('/settings') %}{% set module = 'settings' %}
+{% else %}{% set module = 'workbench' %}{% endif %}
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#142e4c">
+<title>{% block title %}投资项目智能工作台{% endblock %}</title>
+<link rel="stylesheet" href="/static/workbench.css">
+</head><body class="shell">
+<a class="skip-link" href="#main-content">跳至主要内容</a>
+{# L0 套件条：跨模块入口只在这一处出现，子页面不再各挂一份 #}
+<header class="suite-bar">
+<a class="suite-brand" href="/"><span class="suite-mark" aria-hidden="true">研</span>投资项目智能工作台</a>
+<nav class="suite-nav" aria-label="全局导航">
+{% for key, href, name in suite_nav %}<a href="{{ href }}"{% if module == key %} aria-current="page"{% endif %}>{{ name }}</a>{% endfor %}</nav>
+<div class="suite-meta"><time id="today"></time></div>
+</header>
+<div class="shell-body">
+{# L1 左栏：只放工作台自己的页；模型设置是两端共用的，留在套件条，不在这里重复一个入口 #}
+<aside class="sidebar" aria-label="模块导航">
+<div class="side-caption">工作台 <span>WORKBENCH</span></div>
+<nav class="side-nav">
+{% for href, name, glyph in [('/', '首页', 'home'), ('/tasks', '任务进度', 'activity')] %}
+{% set active = (request.endpoint == 'index') if href == '/' else request.path.startswith(href) %}
+<a href="{{ href }}" class="nav-item {{ 'active' if active else '' }}" {% if active %}aria-current="page"{% endif %}><svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{% if glyph == 'home' %}<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9.5 21v-6h5v6"/>{% else %}<path d="M3 12h4l3-8 4 16 3-8h4"/>{% endif %}</svg><span>{{ name }}</span>{% if active %}<span class="nav-indicator"></span>{% endif %}</a>
+{% endfor %}
+</nav>
+<div class="side-foot"><strong>投资项目智能工作台</strong>原文可追溯 · 结果可复核</div>
+</aside>
+<main id="main-content" class="content"><div class="content-inner">
+{# L2 页头的面包屑在这里统一给出。首页自带大标题，再压一条"工作台 / 首页"是重复。 #}
+{% if request.endpoint != 'index' %}<div class="breadcrumb">研究工作台<span>/</span><strong>{{ page_names.get(request.endpoint, '工作台') }}</strong></div>{% endif %}
+{% block content %}{% endblock %}
+{# L4 页脚：跟着内容滚，不挤压内容区 #}
+<footer class="page-foot"><span>投资项目智能工作台</span><span>原文可追溯 · 结果可复核</span></footer>
+</div></main>
+</div>
+<script>var t=document.getElementById('today');if(t)t.textContent=new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'}).format(new Date());</script>
+{% block scripts %}{% endblock %}
+</body></html>

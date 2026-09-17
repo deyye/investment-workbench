@@ -267,17 +267,32 @@ def test_settings_back_keeps_query_but_drops_unsafe_prefix(suite):
 
 
 def test_workbench_nav_marks_current_page(suite):
-    """顶栏五项以前长得一模一样。高亮是"我在哪"的唯一提示，必须恰好一项。"""
+    """两处导航各管一段，以前都长得一模一样。
+
+    L0 套件条回答"在哪个模块"，L1 左栏回答"在模块里的哪一页"。
+    高亮是"我在哪"的唯一提示，每处都必须**恰好一项**（或本模块没有当前页时为零）。
+    """
     _, client, _ = suite
-    for path, expect in [('/', '/'), ('/tasks', '/tasks'), ('/settings/model', '/settings/model')]:
+    for path, suite_expect, side_expect in [
+            ('/', '/', '/'),
+            ('/tasks', '/', '/tasks'),
+            ('/settings/model', '/settings/model', None)]:
         soup = BeautifulSoup(client.get(path).data, 'html.parser')
-        items = soup.select('header.top nav a')
-        assert len(items) == 5, path
+
+        items = soup.select('header.suite-bar .suite-nav a')
+        assert len(items) == 4, f'{path} 套件条应有 4 项跨模块入口'
         marked = [a['href'] for a in items if a.get('aria-current') == 'page']
-        assert marked == [expect], f'{path} 高亮到了 {marked}'
+        assert marked == [suite_expect], f'{path} 套件条高亮到了 {marked}'
         # 高亮只写在 aria-current 上，样式靠 [aria-current=page] 选择器接。
         # 若哪天有人又加一个 class，CSS 与模板就成两处要同步的状态了。
         assert not any('active' in (a.get('class') or []) for a in items), '高亮不应另加 class'
+
+        # 左栏只放工作台自己的页，跨模块的入口一律上移——所以这里固定两项
+        side = soup.select('aside.sidebar .side-nav a')
+        assert [a['href'] for a in side] == ['/', '/tasks'], path
+        side_marked = [a['href'] for a in side if a.get('aria-current') == 'page']
+        assert side_marked == ([side_expect] if side_expect else []), \
+            f'{path} 左栏高亮到了 {side_marked}'
 
 
 def test_settings_back_button_reachable_from_policy_sidebar(suite):
