@@ -13,11 +13,15 @@
 """
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from policy_collector.config import AppConfig
 from policy_collector.db import POLICY_SORTABLE, Database
-from policy_collector.webapp import PAGE_SIZES, POLICY_SORT_COLUMNS, create_app
+from policy_collector.webapp import (PAGE_SIZES, POLICY_SORT_COLUMNS, create_app,
+                                     pager_qs, policy_order_default,
+                                     resolve_policy_sort)
 
 
 @pytest.fixture
@@ -34,12 +38,19 @@ def _client(cfg):
 
 
 def _seed(cfg, rows):
-    """写入若干政策；rows 为 (policy_key, 标题, 日期, 地区, 待办, 复核状态)。"""
+    """写入若干政策。
+
+    rows 为 `(policy_key, 标题, 日期, 地区, 待办, 复核状态[, 类别[, 文号]])`；
+    类别与文号可选，默认分别取 `准入类` 与空串（老的调用点不受影响）。
+    """
     db = Database(cfg.db_path)
-    for key, title, date, region, todo, review in rows:
+    for row in rows:
+        key, title, date, region, todo, review, *rest = row
         db.add_policy_version(key, {
             'title': title, 'page_date': date, 'region': region,
-            'todo_type': todo, 'review_status': review, 'category_names': '准入类',
+            'todo_type': todo, 'review_status': review,
+            'category_names': (rest[0] if rest else '准入类'),
+            'wenhao': (rest[1] if len(rest) > 1 else ''),
         })
     db.close()
 
@@ -52,6 +63,18 @@ SEED = [
     ('k3', '丙：2022年政策', '2022-11-20', '浙江', 'scope',     'pending'),
     ('k4', '丁：无日期政策', '',           '安徽', 'candidate', 'pending'),
     ('k5', '戊：2022年政策（同一天）', '2022-11-20', '广东', 'material', 'pending'),
+]
+
+#: 专门给"表头连点"用的样例：**七列的值两两不同**，所以升序与降序必然
+#: 给出不同的首行——这样"方向变了但数据没变"也能被当场抓住。
+#: 用 SEED 是不行的：那批数据类别全是「准入类」、文号全空，
+#: 按这两列排升降序得到的是同一份结果（并列时都回落到 id 兜底键）。
+TOGGLE_SEED = [
+    ('t1', '甲：最早',  '2019-01-01', '浙江', 'none',      'confirmed', '引导类',     '浙政1号'),
+    ('t2', '乙：第二',  '2021-01-01', '江苏', 'review',    'pending',   '准入类',     '苏政2号'),
+    ('t3', '丙：第三',  '2023-01-01', '安徽', 'scope',     'pending',   '保障类',     '皖政3号'),
+    ('t4', '丁：第四',  '2025-01-01', '广东', 'candidate', 'pending',   '激励约束类', '粤政4号'),
+    ('t5', '戊：最新',  '2027-01-01', '山东', 'material',  'pending',   '其他类',     '鲁政5号'),
 ]
 
 
@@ -175,9 +198,14 @@ def test_sort_headers_expose_state_and_arrows(cfg):
     assert 'aria-sort="ascending"' in body, '当前排序列要标出方向'
     assert '排序：日期升序' in body
     assert 'class="th-sort on"' in body
-    # 点当前列应翻转方向；点未排序列用该列默认方向
-    assert 'sort=date&amp;order=desc' in body or 'sort=date' in body
-    assert 'sort=title&amp;order=asc' in body
+    # 点当前列应翻转方向。注意这里**不能**只断言"地址里有 order=desc"：
+    # 省略 order 是合法的，只要该列自己的默认方向恰好就是 desc（路由会回落过去）。
+    # 所以这一层只断言"声明出来的意图"，真实落点交给下面 test_every_header_*
+    # 去走完整的点击链路——那才是唯一可信的判据。
+    assert '按「日期」降序排列' in body, '当前列的链接应声明翻转后的方向'
+    assert 'href="/policies?sort=date"' in body, 'date 默认就是 desc，省略 order 后仍落到 desc'
+    assert 'href="/policies?sort=title"' in body, '未排序列用该列默认方向（asc，可省略 order）'
+    assert 'href="/policies"' in body, 'id 列默认 desc → 点它回到干净的默认视图'
     # 换排序时应回到第 1 页
     assert 'sort=date&amp;order=desc&amp;page' not in body
 
@@ -291,3 +319,120 @@ def test_runs_page_paginates(cfg):
     body = c.get('/runs?page=99').get_data(as_text=True)
     assert '超出范围' in body and '第 3 / 3 页' in body
     db.close()
+
+
+# ── 7. 表头连点：每一列都必须能来回切（回归） ────────────────
+#
+# 回归背景（2026-09-17，用户报"表头点一下可以，再点一下除了日期之外都不能排序了"）：
+# `order` 的默认值在 `pager_qs` 的 defaults 里被写死成 **id 列的 `desc`**，
+# 而"与默认值相同的参数不写进地址"（规则②）是拿字符串比的。于是：
+#   · 标题列的默认方向是 asc，第二次点击要 desc → 与那个写死的默认值相同
+#     → 从地址里被抹掉 → 路由回落到"标题列默认 asc" → **永远升序**；
+#   · 日期列的默认方向恰好也是 desc → 抹掉后回落得到 desc → 结果正确，
+#     **所以只点日期的开发者会以为一切正常**。
+# 一个值（`desc`）同时被当成"id 列的默认方向"和"标题列的降序"，含义不同却撞在一起。
+#
+# 这组用例走**真实的点击链路**（抓页面上的 href 再请求它），不自己拼 URL——
+# 缺陷恰恰在 href 上，自己拼 URL 会绕过它。
+
+_HEADER_LINK = re.compile(
+    r'<a class="th-sort[^"]*" href="([^"]+)"[^>]*title="按「([^」]+)」([^"]+)排列"')
+_CAPTION = re.compile(r'排序：([^<·]+?)\s*·\s*点表头可换')
+_FIRST_TITLE = re.compile(r'<td class="tt"><a[^>]*>([^<]+)</a>')
+
+_DIR_NAME = {'asc': '升序', 'desc': '降序'}
+
+
+def _header_links(html):
+    """表头显示名 -> (点它的地址, 点下去的意图方向)。"""
+    return {label: (href.replace('&amp;', '&'), intent)
+            for href, label, intent in _HEADER_LINK.findall(html)}
+
+
+def _click_series(c, start, label, times):
+    """从 start 开始连点 label 表头 times 次，返回 (方向序列, 首行标题序列)。"""
+    dirs, firsts = [], []
+    path = start
+    for _ in range(times):
+        html = c.get(path).get_data(as_text=True)
+        dirs.append(_CAPTION.search(html).group(1).strip().replace(label, ''))
+        firsts.append(_FIRST_TITLE.search(html).group(1))
+        path = _header_links(html)[label][0]
+    return dirs, firsts, path
+
+
+@pytest.mark.parametrize('key,label,default', POLICY_SORT_COLUMNS)
+def test_every_header_toggles_back_and_forth(cfg, key, label, default):
+    """切到该列后连点 4 次表头：方向必须严格交替，**且首行数据真的跟着变**。
+
+    只断言"方向文字变了"还不够——地址对、文案对、SQL 没生效是完全可能的；
+    所以同时要求升序与降序的首行标题不同（TOGGLE_SEED 保证七列取值两两不同）。
+    """
+    _seed(cfg, TOGGLE_SEED)
+    c = _client(cfg)
+    other = 'desc' if default == 'asc' else 'asc'
+    dirs, firsts, _ = _click_series(c, f'/policies?sort={key}&order={default}', label, 4)
+    expected = [_DIR_NAME[default], _DIR_NAME[other]] * 2
+    assert dirs == expected, f'「{label}」表头不能来回切换，实际方向轨迹 {dirs}'
+    assert firsts[0] != firsts[1], (
+        f'「{label}」方向文字变了但首行数据没变，排序没真正生效：{firsts[:2]}')
+    # 箭头必须与方向一致（否则用户看到的还是"点了没反应"）
+    html = c.get(f'/policies?sort={key}&order={default}').get_data(as_text=True)
+    assert 'aria-sort="' + ('ascending' if default == 'asc' else 'descending') + '"' in html
+
+
+def test_current_column_link_never_drops_order(cfg):
+    """当前排序列的链接必须**显式带上翻转后的方向**。
+
+    这条是上面那个缺陷的最小复现：旧实现在 `?sort=title&order=asc` 上给出的
+    是 `?sort=title`（order 被当默认值抹掉），点下去回落成 asc，等于没反应。
+    """
+    _seed(cfg, TOGGLE_SEED)
+    c = _client(cfg)
+    for key, label, default in POLICY_SORT_COLUMNS:
+        other = 'desc' if default == 'asc' else 'asc'
+        html = c.get(f'/policies?sort={key}&order={default}').get_data(as_text=True)
+        href = _header_links(html)[label][0]
+        assert f'order={other}' in href, (
+            f'「{label}」在 {default} 下应给出 order={other}，实际是 {href}')
+
+
+def test_order_default_is_derived_from_sort_column():
+    """`pager_qs` 的 defaults 允许传函数，且按"这一份地址里生效的 sort"求值。
+
+    这是修法的机制本身：`order` 的默认方向随列而变，用固定字符串表达不了。
+    """
+    defaults = {'sort': 'id', 'order': policy_order_default, 'per': 20, 'page': 1}
+    qs, base = pager_qs({'sort': 'title', 'order': 'asc', 'per': 20}, defaults)
+    # title 的默认方向就是 asc → base 里不必重复带上 order
+    assert base == {'sort': 'title'}
+    # 目标列是 date（默认 desc）时，order=desc 属于默认值，可以省
+    assert qs(sort='date', order='desc') == '?sort=date'
+    # 目标列是 title（默认 asc）时，order=desc 是**非默认**，绝不能省
+    assert qs(sort='title', order='desc') == '?sort=title&order=desc'
+    # 不换列时按当前列求默认值：title 下 asc 是默认，于是出现干净的 ?sort=title
+    assert qs(sort='title', order='asc') == '?sort=title'
+    # id 列默认 desc：order=asc 必须保留
+    assert qs(sort='id', order='asc') == '?order=asc'
+    assert qs(sort='id', order='desc') == ''
+    for key, _label, direction in POLICY_SORT_COLUMNS:
+        assert resolve_policy_sort(key, '') == (key, direction), f'{key} 缺 order 时应用该列默认方向'
+
+
+def test_list_and_export_agree_on_order(cfg):
+    """同一份地址，页面首行与导出首行必须是同一条。
+
+    列表页与导出页各解析一次 sort/order 是这类缺陷的温床：两边对
+    "order 缺失时算哪个方向"的理解一旦不同，导出顺序就和页面不一样，
+    而两边都是 200，没人会先怀疑排序。
+    """
+    _seed(cfg, TOGGLE_SEED)
+    c = _client(cfg)
+    for query in ('', '?sort=title', '?sort=title&order=desc', '?sort=date&order=asc',
+                  '?sort=region&order=desc', '?sort=坏值&order=xx'):
+        html = c.get('/policies' + query).get_data(as_text=True)
+        page_first = _FIRST_TITLE.search(html).group(1)
+        csv_text = c.get('/policies/export.csv' + query).get_data(as_text=True)
+        export_first = csv_text.lstrip('\ufeff').strip().splitlines()[1].split(',')[1]
+        assert page_first in export_first or export_first in page_first, (
+            f'{query or "(默认)"} 页面首行「{page_first}」与导出行首「{export_first}」不一致')

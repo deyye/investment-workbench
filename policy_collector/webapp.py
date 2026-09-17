@@ -59,6 +59,35 @@ POLICY_SORT_DEFAULT_DIR = {key: direction for key, _label, direction in POLICY_S
 POLICY_SORT_LABELS = {key: label for key, label, _direction in POLICY_SORT_COLUMNS}
 
 
+def resolve_policy_sort(raw_sort: str = "", raw_order: str = "") -> tuple[str, str]:
+    """把地址里的 `sort` / `order` 解析成真正生效的 `(sort, order)`——**唯一一处**。
+
+    列表页与导出页共用。两边各解析一次是这个功能的经典翻车点：只要其中一处
+    对"`order` 缺失时算哪个方向"的理解不同，同一份地址导出的顺序就和页面上
+    看到的不一样，而两边都是 200，没人会先怀疑排序。
+
+    认不出的值安静回落（手改错的 URL 不该 500），方向一律取该列的默认方向。
+    """
+    sort = (raw_sort or "").strip()
+    if sort not in POLICY_SORTABLE:
+        sort = "id"
+    order = (raw_order or "").strip().lower()
+    if order not in ("asc", "desc"):
+        order = POLICY_SORT_DEFAULT_DIR[sort]
+    return sort, order
+
+
+def policy_order_default(view: dict) -> str:
+    """`order` 的默认方向：**随 `sort` 是哪一列而变**。
+
+    这是 `pager_qs` 规则 ④ 唯一的用例，也是"表头只能点一次"那个缺陷的解药：
+    交给它按"这一份地址里最终生效的 sort"现场求默认值，而不是拿一个固定字符串
+    （写死成 `id` 列的 `desc` 的话，凡默认方向是 `asc` 的列都永远点不到降序）。
+    """
+    key = (view or {}).get("sort") or "id"
+    return POLICY_SORT_DEFAULT_DIR.get(key, POLICY_SORT_DEFAULT_DIR["id"])
+
+
 def pager_qs(state: dict, defaults: dict):
     """分页链接的查询串构造器——**全站唯一一处**。
 
@@ -69,18 +98,40 @@ def pager_qs(state: dict, defaults: dict):
       ① 覆盖值盖住当前值；显式传 None 表示"把这个参数去掉"
       ② 与默认值相同的参数不写进地址（链接短、可读、能直接分享）
       ③ 因此 page=1 天然被省略，不需要额外的特判
+      ④ **默认值允许是函数**：`lambda view: ...`，按"这一份地址里最终生效的参数"
+         现场求默认值。用于那种**默认值本身取决于另一个参数**的字段——
+         典型就是 `order`：它的默认方向随 `sort` 是哪一列而变（日期默认降序、
+         标题默认升序）。规则 ② 拿一个固定字符串去比，必然错一半。
+
+    ④ 是怎么被发现的（2026-09-17）：政策库表头点一次能排、**再点一次就不动了**，
+    而且只有「标题/文号/类别/地区/状态」这几列有病，「日期」正常。原因是
+    `order` 的默认值被写死成 `id` 列的 `desc`：
+      · 点日期 → 要 `desc` → 与默认值相同 → 从地址里被抹掉 → 路由回落到
+        「日期列默认 desc」→ 结果正确，**所以日期看起来是好的**；
+      · 点标题 → 要 `desc` → 也被抹掉 → 路由回落到「标题列默认 asc」→
+        点来点去永远是升序，箭头写着"降序"却永远点不到。
+    一个值（`desc`）同时被当成"id 列的默认方向"和"标题列的降序"，
+    两者含义不同却撞在一起，就把一半的列锁死了。
 
     返回 (qs, base)：`base` 是"当前生效且非默认"的参数，供模板里的
     每页条数 / 跳页两个 GET 表单当隐藏域用。
     """
-    base = {k: str(v) for k, v in state.items() if str(v) != str(defaults.get(k, ""))}
+    def default_of(key: str, view: dict) -> str:
+        """view 是"生效参数"字典（含被覆盖后的值），默认值可以从它派生。"""
+        d = defaults.get(key, "")
+        return d(view) if callable(d) else d
+
+    base = {k: str(v) for k, v in state.items() if str(v) != str(default_of(k, state))}
 
     def qs(**overrides):
-        merged = {**base, **{k: str(v) for k, v in overrides.items() if v is not None}}
+        merged = {k: str(v) for k, v in overrides.items() if v is not None}
+        merged = {**base, **merged}
         for key, value in overrides.items():
             if value is None:
                 merged.pop(key, None)
-        merged = {k: v for k, v in merged.items() if str(v) != str(defaults.get(k, ""))}
+        # 注意：判默认值用的是 **merged**（已含覆盖值），不是 base——
+        # 换列时才知道该拿哪一列的默认方向去比（见规则 ④）。
+        merged = {k: v for k, v in merged.items() if str(v) != str(default_of(k, merged))}
         return ("?" + urlencode(merged)) if merged else ""
 
     return qs, base
@@ -217,15 +268,9 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
         review = request.args.get("review", "").strip()
         todo = request.args.get("todo", "").strip()
 
-        # 排序：列名走白名单（认不出就用默认），方向也只在 asc/desc 里取值。
-        # 手改错的 URL 会安静地退回默认视图，而不是 500 或报错。
-        sort = request.args.get("sort", "").strip()
-        if sort not in POLICY_SORTABLE:
-            sort = "id"
-        default_dir = POLICY_SORT_DEFAULT_DIR[sort]
-        order = request.args.get("order", "").strip().lower()
-        if order not in ("asc", "desc"):
-            order = default_dir
+        # 排序参数由 resolve_policy_sort 统一解析（与导出页共用同一份判据）。
+        sort, order = resolve_policy_sort(request.args.get("sort", ""),
+                                         request.args.get("order", ""))
 
         per = request.args.get("per", 0, type=int)
         if per not in PAGE_SIZES:
@@ -258,7 +303,11 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
         # 各写一套 href 是列表页最常见的退化点（改了搜索词翻页就丢排序）。
         state = {"q": q, "region": region, "category": category, "review": review,
                  "todo": todo, "sort": sort, "order": order, "per": per}
-        defaults = {"sort": "id", "order": POLICY_SORT_DEFAULT_DIR["id"], "per": PAGE_SIZES[0], "page": 1}
+        # `order` 的默认值传**函数**而不是字符串：它的默认方向随 sort 是哪一列而变，
+        # 写死成某一个方向就会把"默认方向与之相反的那些列"的第二次点击吃掉
+        # （表现：表头点一次能排、再点一次没反应）。详见 pager_qs 规则 ④。
+        defaults = {"sort": "id", "order": policy_order_default,
+                    "per": PAGE_SIZES[0], "page": 1}
         qs, base = pager_qs(state, defaults)
 
         return render_template(
@@ -293,12 +342,8 @@ def create_app(cfg: AppConfig | None = None) -> Flask:
         category = request.args.get("category", "").strip()
         review = request.args.get("review", "").strip()
         todo = request.args.get("todo", "").strip()
-        sort = request.args.get("sort", "").strip()
-        if sort not in POLICY_SORTABLE:
-            sort = "id"
-        order = request.args.get("order", "").strip().lower()
-        if order not in ("asc", "desc"):
-            order = POLICY_SORT_DEFAULT_DIR[sort]
+        sort, order = resolve_policy_sort(request.args.get("sort", ""),
+                                         request.args.get("order", ""))
 
         d = db()
         rows = d.query_policies(region=region, category=category, keyword=q,
