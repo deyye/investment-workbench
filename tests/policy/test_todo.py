@@ -158,7 +158,7 @@ def test_todo_overview_matches_filtered_list(pipe):
 
 
 def test_human_queue_excludes_machine_and_spotcheck(pipe):
-    """"需你处理"只算要人**逐条**判的。
+    """"待人工判定"只算要人**逐条**判的。
 
     candidate 是抽检（扫一眼翻转）、material/system 是机器与运维的活，
     都不该算到人头上——否则又变回那个没有行动指向的总数。

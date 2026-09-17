@@ -1,3 +1,4 @@
+import ast
 import base64
 import io
 import json
@@ -352,6 +353,113 @@ def test_authored_shell_text_is_gone(suite):
         hit = [t for t in banned if t in html]
         assert not hit, f'{path} 仍有装饰性英文标签：{hit}'
         assert 'side-caption' not in html, f'{path} 仍有左栏中英对照小标题'
+
+
+# --- 界面文案不能称呼使用者 -----------------------------------------------------
+# 规则来自用户 2026-09-17：「不要出现"需你处理"这种人称指代用语」。
+# 界面是给人看的操作台，口径统一到**责任方**（机器自修 / 运维处理 / 业务抽检 /
+# 业务确认 / 业务拍板），不直接对使用者说"你"。
+
+#: 第二人称：简繁与敬称都算。
+SECOND_PERSON = ('你', '您')
+
+#: 界面文案可能出现的所有文件：三端模板 + 审批侧那个**不过 Jinja**的静态页。
+UI_TEXT_FILES = (
+    *sorted(Path('policy_collector/templates').glob('*.html')),
+    *sorted(Path('workbench/templates').glob('*.html')),
+    Path('app/static/index.html'),
+)
+
+#: 只剥注释，**不剥 Jinja 的 `{% %}` / `{{ }}`**——这一条是踩过才定的：
+#: 出问题的那处 `'需你处理'` 恰好写在 Jinja 表达式**内部**的元组字面量里，
+#: 要是按"只扫 `{{ }}` 之外的字面 HTML"来做，就会把那处直接漏掉。
+#: 变量名都是 ASCII，所以模板里出现的中文＝作者手写的文案，可以放心扫。
+_TEMPLATE_COMMENT = re.compile(r'\{#.*?#\}|<!--.*?-->', re.S)
+
+
+def test_no_second_person_in_template_copy():
+    """模板源码里（`{{ }}` 变量之外）不能写第二人称。
+
+    与下面那条的区别：这条不受"将来抓到什么数据"影响，钉子钉在**我们自己写的话**上。
+    """
+    offenders = []
+    for path in UI_TEXT_FILES:
+        text = _TEMPLATE_COMMENT.sub('', path.read_text(encoding='utf-8'))
+        for word in SECOND_PERSON:
+            for m in re.finditer(re.escape(word), text):
+                line = text[:m.start()].count('\n') + 1
+                snippet = text.splitlines()[line - 1].strip()[:70]
+                offenders.append(f'{path}:{line} 出现「{word}」→ {snippet}')
+    assert not offenders, '模板文案出现第二人称指代：\n' + '\n'.join(offenders)
+
+
+def test_no_second_person_on_rendered_pages(suite):
+    """渲染结果里也不能有第二人称——钉住真实产出，而不只是源码。
+
+    实测（2026-09-17）这 12 个页面里唯一的来源就是作者文案；政策标题、正文、
+    附件名都取自 `data/`，都没有第二人称。所以这条断言现在很干净。
+    **若将来某条政策标题真的带"你"**（比如《致广大投资者的一封信》），
+    应当把断言收窄到页面外壳区域（`header.suite-bar` / `aside.sidebar` /
+    `.page-head`），**而不是删掉这条**——删了就等于放弃这条规则。
+    """
+    _, client, _ = suite
+    for path in SUITE_HIGHLIGHT:
+        html = client.get(path).get_data(as_text=True)
+        assert len(html) > 1000, f'{path} 响应过短（{len(html)} 字节），断言不可信'
+        hit = [w for w in SECOND_PERSON if w in html]
+        assert not hit, f'{path} 出现第二人称指代：{hit}'
+
+
+def test_no_markdown_bold_leaks_into_html(suite):
+    """界面文案里不能有 Markdown 的 `**加粗**`——HTML 不认，会原样印出星号。
+
+    真实出现过：待办页「这几格是怎么定的」三条说明里写了 `**没有静默入库**`，
+    页面上就真的显示成 `**没有静默入库**`（页面 200、测试全绿、肉眼看才看出）。
+    """
+    _, client, _ = suite
+    for path in SUITE_HIGHLIGHT:
+        html = client.get(path).get_data(as_text=True)
+        leaked = re.findall(r'\*\*[^*<>\n]{2,30}\*\*', html)
+        assert not leaked, f'{path} 有 Markdown 加粗漏成字面星号：{leaked}'
+
+
+#: 终端输出（`print` / argparse 的 `help=`）也是给人看的，同一条规则要管。
+#: 用 AST 取**字符串字面量**，因此注释、docstring 天然不在范围内——
+#: 代码里的注释写「需你处理」只是历史说明，不对外可见，不该被这条拦住。
+_TERMINAL_TEXT_DIRS = ('policy_collector', 'workbench', 'app', 'core')
+
+
+def _terminal_text_offenders(path: Path) -> list:
+    tree = ast.parse(path.read_text(encoding='utf-8'))
+    out = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        is_print = isinstance(node.func, ast.Name) and node.func.id == 'print'
+        helps = [k.value for k in node.keywords if k.arg == 'help']
+        if not (is_print or helps):
+            continue
+        for part in [*node.args, *helps]:
+            for sub in ast.walk(part):
+                if not isinstance(sub, ast.Constant) or not isinstance(sub.value, str):
+                    continue
+                if any(w in sub.value for w in SECOND_PERSON):
+                    out.append(f'{path}:{sub.lineno} → {sub.value.strip()[:70]}')
+    return out
+
+
+def test_no_second_person_in_terminal_output():
+    """命令行输出的字面量不能称呼使用者。
+
+    与模板那条同源：`policy_collector/cli.py` 的统计输出原先印的是
+    「需你逐条处理 N 条」，页面改了措辞、CLI 没跟上，两边就会各说各的。
+    这条只扫首方包，不扫 `tests/`——测试里那些「你单位…收悉」是公文原文。
+    """
+    offenders = []
+    for d in _TERMINAL_TEXT_DIRS:
+        for path in sorted(Path(d).rglob('*.py')):
+            offenders += _terminal_text_offenders(path)
+    assert not offenders, '命令行输出出现第二人称指代：\n' + '\n'.join(offenders)
 
 
 def test_settings_back_button_reachable_from_policy_sidebar(suite):

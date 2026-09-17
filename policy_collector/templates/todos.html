@@ -19,7 +19,7 @@
 
 <p class="todo-summary">
   共 {{ todos.total }} 条在库里 ·
-  <strong>需要你逐条处理 {{ todos.human }} 条</strong>（结论待确认 + 待定口径）·
+  <strong>需逐条人工处理 {{ todos.human }} 条</strong>（结论待确认 + 待定口径）·
   另可抽检 {{ todos.counts.get('candidate', 0) }} 条高置信候选 ·
   机器自修 {{ todos.machine }} 条 · 运维处理 {{ todos.system }} 条 ·
   另有 {{ todos.clear }} 条判定明确，无需人工
@@ -56,9 +56,9 @@
 <section class="panel">
   <div class="panel-heading"><h2>这几格是怎么定的</h2></div>
   <ul class="region-hint">
-    <li><strong>高置信候选是"抽检"不是"逐条判"</strong>：规则判「收」且强判据达标——机器很确定，但**没有静默入库**。你抽检几条，翻转少数判错的即可；没看过之前它始终算待办。这一档由业务方 2026-09-14 裁定。</li>
-    <li><strong>结论待确认 / 待定口径才是要你逐条看的</strong>：前者是机器判不下去（多类混杂、命中边界样例），后者是相关性判不出来、要业务方定口径。</li>
-    <li><strong>材料待补和系统待修不该占你的时间</strong>：前者补齐附件后会自动重判，后者接口配好后会自动补判。这两格是给机器和运维看进度的。</li>
+    <li><strong>高置信候选是"抽检"不是"逐条判"</strong>：规则判「收」且强判据达标——机器很确定，但没有静默入库。抽检几条，翻转少数判错的即可；没看过之前它始终算待办。这一档由业务方 2026-09-14 裁定。</li>
+    <li><strong>结论待确认 / 待定口径才是要逐条看的</strong>：前者是机器判不下去（多类混杂、命中边界样例），后者是相关性判不出来、要业务方定口径。</li>
+    <li><strong>材料待补和系统待修不占用人工时间</strong>：前者补齐附件后会自动重判，后者接口配好后会自动补判。这两格是给机器和运维看进度的。</li>
     <li>待办类型由<strong>判定环节派生后落库</strong>（<code>policies.todo_type</code>，见 <code>policy_collector/todo.py</code>）；界面统计与列表过滤都读同一个字段，所以数字和条数一定对得上。</li>
   </ul>
 </section>

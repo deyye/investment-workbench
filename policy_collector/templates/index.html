@@ -6,12 +6,12 @@
 <form method="post" action="{{ url_for('source_run_all') }}" class="inline-run"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="prefer" value="llm"><button class="btn" type="submit">{{ icon('globe') }} 一键全国采集（{{ stats.sources_enabled }} 个来源）</button><span class="hint">可离开此页；单个来源失败不影响整批。</span></form>
 </section>
 <div class="metrics-grid">
-{% for value,label,glyph,sub in [(stats.policies,'政策记录','file','当前版本 · 含待办'),(todos.human,'需你处理','check','仅需人工判定'),(stats.sources_enabled,'启用来源','globe','已配置来源共 ' ~ stats.sources ~ ' 个'),(stats.runs,'累计运行批次','activity','采集任务运行记录')] %}
+{% for value,label,glyph,sub in [(stats.policies,'政策记录','file','当前版本 · 含待办'),(todos.human,'待人工判定','check','不含抽检与机器项'),(stats.sources_enabled,'启用来源','globe','已配置来源共 ' ~ stats.sources ~ ' 个'),(stats.runs,'累计运行批次','activity','采集任务运行记录')] %}
 <div class="metric {{ 'attention' if loop.index==2 else '' }}"><div class="metric-top"><span>{{ label }}</span><span class="metric-icon">{{ icon(glyph) }}</span></div><div class="metric-value">{{ value }}<span>{{ '个' if loop.index==3 else '批' if loop.index==4 else '份' }}</span></div><div class="metric-sub">{{ sub }}</div></div>
 {% endfor %}
 </div>
 {% if todos %}
-<div class="section-heading"><h2>待办清单</h2><a class="text-link" href="{{ url_for('todos') }}">按谁能解决分开看 {{ icon('arrow') }}</a></div>
+<div class="section-heading"><h2>待办清单</h2><a class="text-link" href="{{ url_for('todos') }}">按责任方分开看 {{ icon('arrow') }}</a></div>
 <div class="todo-grid">
 {% for c in todos.cells %}
   <a class="todo-card {{ c.key }}" href="{{ url_for('policies', todo=c.key) }}">

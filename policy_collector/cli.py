@@ -174,13 +174,13 @@ def cmd_stats(args: argparse.Namespace) -> int:
     db = Database(cfg.db_path)
     total = db.query_policies(limit=100000)
     print(f"政策总数: {len(total)}（当前版本，不含已剔除）")
-    # 待办按"谁能解决"分开报，读的是与 Web 待办清单**同一个字段**（policies.todo_type）。
+    # 待办按"责任方"分开报，读的是与 Web 待办清单**同一个字段**（policies.todo_type）。
     # 原实现报的是旧的 need_review 计数——那个布尔把材料缺件、模型故障、口径待定
     # 混在一起，于是 CLI 报一个数、页面报另一组数，两边对不上账。
     from .todo import NONE, TODO_META, TODO_ORDER
     ov = db.todo_overview()
     counts = ov["counts"]
-    print(f"待办分布（在库 {len(total)} 条 · 需你逐条处理 {ov['human']} 条）:")
+    print(f"待办分布（在库 {len(total)} 条 · 需逐条人工处理 {ov['human']} 条）:")
     for key in TODO_ORDER:
         name, owner, _ = TODO_META[key]
         print(f"  {name}（{owner}）: {counts.get(key, 0)}")

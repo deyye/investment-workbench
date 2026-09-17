@@ -807,7 +807,7 @@ class Database:
             "cells": cells,
             "counts": counted,
             "total": sum(counted.values()),
-            # "需你处理"只算需要人**逐条**判断的；
+            # "待人工判定"只算需要人**逐条**判断的；
             # candidate 是抽检（不逐条）、material/system 是机器与运维的活，都不计
             "human": sum(counted.get(k, 0) for k in HUMAN_QUEUES),
             "machine": counted.get(MATERIAL, 0),
