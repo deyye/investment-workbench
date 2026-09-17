@@ -19,6 +19,49 @@ from .approval import blueprint
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# 设置页顶部「返回」要落到哪一页，以及那一页在人话里叫什么。
+# 用顶栏和侧栏的叫法（"政策资料库"），不写 URL 片段——用户认的是名字。
+# 顺序即优先级：具体路径在前，'/' 兜底放最后。
+RETURN_TARGETS = (
+    ('/policy/policies', '政策资料库'),
+    ('/policy/quality', '材料质量'),
+    ('/policy/sources', '采集来源'),
+    ('/policy/provinces', '省份浏览'),
+    ('/policy/maintenance', '数据维护'),
+    ('/policy/runs', '处理进度'),
+    ('/policy/todos', '待办清单'),
+    ('/policy', '政策归集'),
+    ('/approval', '审批文件'),
+    ('/tasks', '任务进度'),
+    ('/', '首页'),
+)
+
+# 本身就是"设置"的路径不能当返回目标：回到它们会被 303 再弹回设置页，
+# 在界面上表现为一个按了没反应的按钮。
+RETURN_BLOCKED = {'/settings/model', '/policy/settings/model'}
+
+
+def return_target(referrer, host):
+    """算出模型设置页顶部「返回」该指向哪里。
+
+    设置页的入口是散的（工作台顶栏、首页模型胶囊、政策侧导航的「模型配置」），
+    给每个入口挂 from 参数必然漏掉后加的那个，所以读浏览器自带的来路。
+    判定不出来（书签直达、地址栏输入、跨站来路）就退回首页，不猜。
+    """
+    fallback = {'url': '/', 'label': '首页'}
+    parsed = urlsplit(referrer or '')
+    if parsed.netloc and parsed.netloc != host:
+        return fallback
+    path = parsed.path
+    if not path.startswith('/') or path.startswith('//') or path.rstrip('/') in RETURN_BLOCKED:
+        return fallback
+    for prefix, label in RETURN_TARGETS:
+        if path == prefix or (prefix != '/' and path.startswith(prefix + '/')):
+            # 查询串要一起带回去：从"政策资料库第 3 页、按日期排序"点进设置，
+            # 返回时必须还是那一页，否则等于把人丢回列表开头。
+            return {'url': path + (('?' + parsed.query) if parsed.query else ''), 'label': label}
+    return fallback
+
 
 def create_app(data_dir=None, policy_config=None):
     _load_dotenv(ROOT / '.env')
@@ -71,7 +114,7 @@ def create_app(data_dir=None, policy_config=None):
 
     @app.get('/settings/model')
     def model_page():
-        return render_template('model.html')
+        return render_template('model.html', back=return_target(request.referrer, request.host))
 
     @app.get('/api/model/config')
     def config():

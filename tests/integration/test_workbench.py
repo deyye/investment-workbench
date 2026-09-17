@@ -205,3 +205,96 @@ def test_policy_pipeline_review_and_mounted_post_redirect(suite):
         assert client.get('/tasks').status_code == 200
     finally:
         pipe.close()
+
+
+# --- 模型设置页的「从哪来、回哪去」 -------------------------------------------
+# 起因：设置页入口是散的（工作台顶栏、首页模型胶囊、政策侧导航的「模型配置」），
+# 却一个回退路径都没有。用户从政策资料库第 3 页点进来配完模型，只能自己重找。
+
+def _back_button(client, referer=None):
+    """取出设置页返回按钮的 (目标地址, 文案)。referer=None 表示模拟书签直达。
+
+    箭头是装饰，必须标了 aria-hidden 才不代表实际内容——这里顺手当成断言：
+    读屏软件念出来的应该只有"返回政策资料库"。
+    """
+    headers = {'Referer': referer} if referer else {}
+    html = client.get('/settings/model', headers=headers).get_data(as_text=True)
+    soup = BeautifulSoup(html, 'html.parser')
+    node = soup.select_one('a.back')
+    assert node is not None, f'设置页没有返回按钮（referer={referer!r}）'
+    for deco in node.select('[aria-hidden="true"]'):
+        deco.decompose()
+    return node['href'], node.get_text(strip=True)
+
+
+@pytest.mark.parametrize('referer,expect_url,expect_label', [
+    ('/policy/policies?sort=date&order=desc&per=50',
+     '/policy/policies?sort=date&order=desc&per=50', '返回政策资料库'),
+    ('/policy/quality', '/policy/quality', '返回材料质量'),
+    ('/policy/runs/batch-abc', '/policy/runs/batch-abc', '返回处理进度'),
+    ('/policy/todos', '/policy/todos', '返回待办清单'),
+    ('/policy/', '/policy/', '返回政策归集'),
+    ('/tasks', '/tasks', '返回任务进度'),
+    ('/', '/', '返回首页'),
+    ('/approval/xyz', '/approval/xyz', '返回审批文件'),
+])
+def test_settings_back_button_follows_referer(suite, referer, expect_url, expect_label):
+    _, client, _ = suite
+    assert _back_button(client, referer) == (expect_url, expect_label)
+
+
+@pytest.mark.parametrize('referer,why', [
+    (None, '书签/地址栏直达'),
+    ('https://evil.example/x', '跨站来路不能成为跳转目标'),
+    ('//evil.example/x', '协议相对 URL 同样要挡住'),
+    ('/policy/settings/model', '旧设置页会被 303 弹回来，等于按钮没反应'),
+    ('/settings/model', '从设置页自身刷新'),
+    ('/api/model/config', '来路不是页面'),
+])
+def test_settings_back_button_falls_back_home(suite, referer, why):
+    _, client, _ = suite
+    url, label = _back_button(client, referer)
+    assert (url, label) == ('/', '返回首页'), why
+
+
+def test_settings_back_keeps_query_but_drops_unsafe_prefix(suite):
+    """查询串要带回去，路径本身不能带协议或主机——Referer 是外部输入。"""
+    _, client, _ = suite
+    url, _ = _back_button(client, 'http://127.0.0.1/fake/path')
+    assert url == '/', '同源但未登记的路径应退首页'
+    url, _ = _back_button(client, '/policy/provinces?region=%E6%B1%9F%E8%8B%8F')
+    assert url == '/policy/provinces?region=%E6%B1%9F%E8%8B%8F'
+
+
+def test_workbench_nav_marks_current_page(suite):
+    """顶栏五项以前长得一模一样。高亮是"我在哪"的唯一提示，必须恰好一项。"""
+    _, client, _ = suite
+    for path, expect in [('/', '/'), ('/tasks', '/tasks'), ('/settings/model', '/settings/model')]:
+        soup = BeautifulSoup(client.get(path).data, 'html.parser')
+        items = soup.select('header.top nav a')
+        assert len(items) == 5, path
+        marked = [a['href'] for a in items if a.get('aria-current') == 'page']
+        assert marked == [expect], f'{path} 高亮到了 {marked}'
+        # 高亮只写在 aria-current 上，样式靠 [aria-current=page] 选择器接。
+        # 若哪天有人又加一个 class，CSS 与模板就成两处要同步的状态了。
+        assert not any('active' in (a.get('class') or []) for a in items), '高亮不应另加 class'
+
+
+def test_settings_back_button_reachable_from_policy_sidebar(suite):
+    """端到端：政策库 → 侧栏「模型配置」→ 设置页 → 返回，应回到原筛选状态。"""
+    app, client, _ = suite
+    pipe = Pipeline(app.extensions['policy_config'])
+    try:
+        pipe.run_demo(samples_dir=Path('samples/policies'))
+    finally:
+        pipe.close()
+    source = '/policy/policies?sort=date&order=desc&per=50'
+    assert client.get(source).status_code == 200
+    doc = BeautifulSoup(client.get('/policy/').data, 'html.parser')
+    entry = [a['href'] for a in doc.select('nav.side-nav a') if '模型' in a.get_text()]
+    assert entry == ['/policy/settings/model'], entry
+    hop = client.get(entry[0])
+    assert hop.status_code == 303 and hop.location == '/settings/model'
+    url, label = _back_button(client, source)
+    assert (url, label) == (source, '返回政策资料库')
+    assert client.get(url).status_code == 200

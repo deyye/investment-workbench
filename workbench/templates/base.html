@@ -1,1 +1,7 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}投资项目智能工作台{% endblock %}</title><link rel="stylesheet" href="/static/workbench.css"></head><body><header class="top"><a class="brand" href="/"><span class="mark">研</span>投资项目智能工作台</a><nav aria-label="工作台导航"><a href="/">首页</a><a href="/approval/">审批文件</a><a href="/policy/">政策归集</a><a href="/tasks">任务进度</a><a href="/settings/model">模型设置</a></nav></header><main class="container">{% block content %}{% endblock %}</main><footer>原文可追溯 · 结果可复核</footer>{% block scripts %}{% endblock %}</body></html>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{% block title %}投资项目智能工作台{% endblock %}</title><link rel="stylesheet" href="/static/workbench.css"></head><body><header class="top"><a class="brand" href="/"><span class="mark">研</span>投资项目智能工作台</a><nav aria-label="工作台导航">
+{# 当前页要说出来。此前五项长得一模一样，进了模型设置既看不出在设置里，
+   也看不出旁边还有哪几个地方可去——"回不去"有一半是"不知道自己在哪"。 #}
+{% for href, name in [('/', '首页'), ('/approval/', '审批文件'), ('/policy/', '政策归集'), ('/tasks', '任务进度'), ('/settings/model', '模型设置')] %}
+{% set active = (request.path == href) if href == '/' else request.path.startswith(href.rstrip('/')) %}
+<a href="{{ href }}"{% if active %} aria-current="page"{% endif %}>{{ name }}</a>
+{% endfor %}</nav></header><main class="container">{% block content %}{% endblock %}</main><footer>原文可追溯 · 结果可复核</footer>{% block scripts %}{% endblock %}</body></html>
