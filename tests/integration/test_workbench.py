@@ -11,6 +11,7 @@ from pathlib import Path
 import fitz
 import pytest
 from bs4 import BeautifulSoup
+from bs4.element import Comment, NavigableString, Tag
 from core import llm
 from policy_collector.llm_client import LLMClient
 from policy_collector.pipeline import Pipeline
@@ -313,3 +314,52 @@ def test_settings_back_button_reachable_from_policy_sidebar(suite):
     url, label = _back_button(client, source)
     assert (url, label) == (source, '返回政策资料库')
     assert client.get(url).status_code == 200
+
+
+# --- 外壳层的两类"只有肉眼看才崩"的缺陷 ---------------------------------------
+# 起因：给审批页加外壳时写了 Jinja 注释 `{# #}`，而 app/static/index.html 是
+# **静态资源**（app/server.py 直接 read_bytes 吐出去，不经 Jinja）。于是注释原样输出，
+# 落在 .shell-body 这个 grid 容器里，每个文本节点变成一个匿名栅格项，三列被挤塌。
+# 症状：页面 200、全部测试绿、只有打开页面才看得出。
+
+# 三个模块的 .shell-body 有几个直接子元素（列）。这是"布局没被撑坏"的硬指标，
+# 比"页面能打开"强得多：多一个文本节点就变成多一列。
+SHELL_COLUMNS = {'/': 2, '/tasks': 2, '/settings/model': 2, '/approval/': 3,
+                 '/policy/': 2, '/policy/policies': 2}
+
+
+@pytest.mark.parametrize('path,columns', sorted(SHELL_COLUMNS.items()))
+def test_shell_grid_has_only_element_children(suite, path, columns):
+    """栅格容器里除元素外不能有非空文本节点——它就是多出来的一列。
+
+    HTML 注释不算：它不生成盒子。Jinja 注释算，因为它根本没被处理。
+    """
+    _, client, _ = suite
+    soup = BeautifulSoup(client.get(path).data, 'html.parser')
+    body = soup.select_one('.shell-body')
+    assert body is not None, f'{path} 没有 .shell-body——外壳没接上'
+
+    kids = list(body.children)
+    elements = [k for k in kids if isinstance(k, Tag)]
+    stray = [k for k in kids
+             if isinstance(k, NavigableString) and not isinstance(k, Comment) and k.strip()]
+    assert not stray, (
+        f'{path} 的 .shell-body 里混进了非空文本节点，会各自变成一个匿名栅格项：\n'
+        + '\n'.join(f'  {str(s)[:90]!r}' for s in stray)
+    )
+    assert len(elements) == columns, (
+        f'{path} 的 .shell-body 应有 {columns} 列，实际 {[e.name for e in elements]}'
+    )
+
+
+def test_static_page_has_no_template_syntax(suite):
+    """审批页是静态文件，模板语法不会被处理，只会原样印在页面上。
+
+    这份文件不走 Jinja——`app/server.py` 里 `read_bytes()` 直接返回。
+    在它里面写 `{{ }}` / `{% %}` / `{# #}` 都会成为可见正文。
+    """
+    _, client, _ = suite
+    for path in ['/approval/']:
+        html = client.get(path).get_data(as_text=True)
+        for token in ('{{', '{%', '{#'):
+            assert token not in html, f'{path} 输出了未处理的模板语法 {token!r}'
