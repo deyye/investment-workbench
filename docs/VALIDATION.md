@@ -350,3 +350,53 @@ TMPDIR=/tmp/pytmp NO_PROXY=127.0.0.1,localhost ./.venv/bin/python -m pytest test
   已用离线渲染（`test_client` 取 HTML）逐页核对骨架层级与类名，**未经人眼确认**。
 - 三份 CSS 的 `:root` 仍有各自的历史 token（审批的 `--red/--gold`、工作台的 `--warn/--bad`）
   未收敛；这些是各模块的语义色，收敛需要先统一语义命名，另开一轮。
+
+---
+
+## 追加轮次：统一外壳上线后暴露的两个"只有肉眼看得出"的缺陷（2026-09-17 中午）
+
+上一轮把外壳换成五层骨架后，测试全绿、离线结构核对通过，但**打开页面才看得出**两处问题，
+均由用户截图反馈。两处的共同症状值得记下来：**页面 200、全部测试绿、静态核对通过，
+只有真实渲染才露馅**。这类缺陷不能靠"再读一遍代码"发现，只能靠加守卫把它变成红灯。
+
+### 缺陷一：审批页布局塌陷——静态文件里写了 Jinja 注释
+
+- **现象**：审批页顶栏下面印出 `{# L0 套件条 #}` 之类的**正文**，三列被挤塌。
+- **根因**：`app/static/index.html` 是**静态资源**——`app/server.py` 里 `read_bytes()`
+  原样返回，**不经过 Jinja**。写在里面的 5 处 `{# #}` 注释不被处理，原样输出成文本节点；
+  而它落在 `.shell-body` 这个 `display:grid` 容器里，**每个文本节点会变成一个匿名栅格项**，
+  于是 3 列变 8 列。（另两端走 Jinja，同样写法完全正常——这正是它骗过测试的原因。）
+- **修复**：5 处 `{# #}` → `<!-- -->`；文件头补一行说明"本文件不经 Jinja，只能写 HTML 注释"。
+- **守卫**（`tests/integration/test_workbench.py`）：
+  - `test_shell_grid_has_only_element_children[...]`（6 个参数）：断言 `.shell-body`
+    的直接子节点除元素外无非空文本节点，且列数与预期一致（工作台/政策 2、审批 3）。
+    判定杂散文本时**必须排除 `Comment`**——它是 `NavigableString` 的子类，但 HTML 注释
+    不生成盒子，误判会让守卫自己变红。
+  - `test_static_page_has_no_template_syntax`：审批页输出里不许出现 `{{` / `{%` / `{#`。
+
+### 缺陷二：套件条链接出现下划线——删旧规则时删掉了唯一的抑制
+
+- **现象**：**只有审批页**的套件条里，品牌字与四个入口带浏览器默认下划线。
+- **根因**：`.suite-nav a{...;text-decoration:none}` 是审批页**唯一**抑制下划线的规则
+  （`app/static/style.css` 原本**没有**全局 `a` 规则，而 workbench/policy 各有一条，
+  恰好把同款问题掩盖了）。上一轮删旧壳规则时把它一起删掉，新写的外壳段又没有
+  `text-decoration`，于是只有审批页露馅。品牌字在旧版是 `<div class="brand">`，
+  这轮才变成 `<a class="suite-brand">`，属于**新出现的链接**。
+- **修复**：
+  1. 三份 CSS 的 `.suite-brand` 与 `.suite-nav a` 各补 `text-decoration:none`——
+     外壳自带，不再依赖任何模块的全局规则；
+  2. 审批 CSS 补全局基线 `a{color:var(--blue);text-decoration:none}`，
+     与 policy（`color:var(--blue)`）/ workbench（`color:inherit`）对齐。
+     顺带修好了左栏「统一模型设置 →」的历史遗留下划线。
+- **守卫**：`test_shell_links_declare_no_underline[workbench|policy|approval]`
+  （3 个参数）逐份 CSS 断言两件事——`.suite-brand` / `.suite-nav a` 自身声明了
+  `text-decoration:none`；且存在全局 `a{...text-decoration:none}` 基线规则。
+  已做反向验证：把审批 CSS 里的两处 `text-decoration:none` 抹掉，守卫**立刻报错**。
+
+### 验证
+
+- 全量 **457 passed / 10 skipped**（上一轮 447 → 本轮 **+10**：6 个栅格列数 + 3 个下划线 + 1 个静态页模板语法）。
+- 离线快照 `verify-shell/`（CSS 内联，位于仓库外）逐页重生成，索引页写明本轮核对点；
+  三端快照内联样式已核对一致：`.suite-brand` / `.suite-nav a` / 全局 `a` 基线 **三端全有**。
+- 结论：**这类缺陷的通用对策是加"结构级"守卫**（列数、每个节点类型、每条 CSS 声明的存在性），
+  而不是靠人反复看页面。守卫要**做反向验证**，确认它在该缺陷复现时确实会红。

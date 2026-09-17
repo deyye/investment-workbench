@@ -27,7 +27,8 @@
   color:#fff;
   font-size:14px;
   font-weight:600;
-  white-space:nowrap
+  white-space:nowrap;
+  text-decoration:none
 }
 .suite-mark {
   width:26px;
@@ -53,7 +54,8 @@
   padding:6px 11px;
   border-radius:6px;
   color:#c3d1e0;
-  white-space:nowrap
+  white-space:nowrap;
+  text-decoration:none
 }
 .suite-nav a:hover {
   color:#fff;
@@ -435,6 +437,10 @@
 
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg)}
+/* 全局链接基线：三份外壳都要有这一条（policy/workbench 各有同款）。
+   本模块原来没有，统一外壳时又把旧的 .suite-nav a{text-decoration:none} 删了，
+   结果只有审批页的套件条出现下划线——另两端被各自的全局规则掩盖了。 */
+a{color:var(--blue);text-decoration:none}
 button,a,input,textarea{font:inherit}
 button,.button{cursor:pointer;border:1px solid var(--line);border-radius:5px;padding:9px 13px;background:white;color:var(--ink);text-decoration:none;font-size:12px}
 button:hover,.button:hover{border-color:var(--blue);background:#eef3f8}

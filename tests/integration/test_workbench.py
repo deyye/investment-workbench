@@ -363,3 +363,38 @@ def test_static_page_has_no_template_syntax(suite):
         html = client.get(path).get_data(as_text=True)
         for token in ('{{', '{%', '{#'):
             assert token not in html, f'{path} 输出了未处理的模板语法 {token!r}'
+
+
+# --- 外壳的"链接下划线"缺陷 ----------------------------------------------------
+# 套件条里是两个 <a>：品牌 `.suite-brand` + 四入口 `.suite-nav a`。
+# 统一外壳时删掉了审批页旧的 `.suite-nav a{text-decoration:none}`，新写的外壳段又没有
+# `text-decoration`，于是只有审批页出现浏览器默认下划线——另两端各有一条全局 `a` 规则
+# 刚好兜住，把缺陷掩盖了。症状依旧是"测试全绿、只有肉眼看得出"。
+# 两条硬约束因此钉死：① 外壳自身的链接规则必须自带 text-decoration:none；
+# ② 三份 CSS 都要有同款全局 `a` 基线，不然下次再加链接又会漏。
+
+SHELL_CSS = {
+    'workbench': 'workbench/static/workbench.css',
+    'policy': 'policy_collector/static/style.css',
+    'approval': 'app/static/style.css',
+}
+
+
+@pytest.mark.parametrize('module,rel', sorted(SHELL_CSS.items()))
+def test_shell_links_declare_no_underline(module, rel):
+    """外壳链接的"无下划线"必须写在自身规则里，不能靠别的模块的全局规则兜底。"""
+    css = re.sub(r'/\*.*?\*/', '', Path(rel).read_text(encoding='utf-8'), flags=re.S)
+
+    for selector in ('.suite-brand', '.suite-nav a'):
+        match = re.search(re.escape(selector) + r'\s*\{([^}]*)\}', css)
+        assert match, f'{module}：外壳 CSS 里找不到 {selector} 规则'
+        body = match.group(1).replace(' ', '')
+        assert 'text-decoration:none' in body, (
+            f'{module}：{selector} 没有声明 text-decoration:none，'
+            '套件条会出现浏览器默认下划线'
+        )
+
+    assert re.search(r'(?<![-\w.#])a\s*\{[^}]*text-decoration\s*:\s*none', css), (
+        f'{module}：缺少全局 a{{text-decoration:none}} 基线规则。'
+        '三份外壳都要有这一条，否则新加的链接会带下划线'
+    )
