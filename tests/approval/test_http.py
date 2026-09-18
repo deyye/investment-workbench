@@ -1,7 +1,7 @@
 """Real HTTP contract, isolated temporary storage, no external services."""
 import base64,io,json,tempfile,threading,time,unittest,urllib.request,urllib.error
 from http.server import ThreadingHTTPServer
-import fitz
+import pymupdf as fitz
 from openpyxl import load_workbook
 from app.server import Handler,Store
 

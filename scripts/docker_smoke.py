@@ -6,7 +6,7 @@ import json
 import time
 import urllib.request
 from pathlib import Path
-import fitz
+import pymupdf as fitz
 from openpyxl import load_workbook
 
 parser=argparse.ArgumentParser()

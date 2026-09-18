@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import fitz
+import pymupdf as fitz
 
 from app.extract import FIELDS, mark_missing_reason
 from app.compare import rows_for, export_xlsx

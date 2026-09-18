@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse,unquote,parse_qs
-import fitz
+import pymupdf as fitz
 from .extract import extract,FIELDS,STAGES,numeric
 from .compare import rows_for,export_xlsx
 from .review import update as apply_review

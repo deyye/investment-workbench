@@ -611,7 +611,7 @@ function applyModelConfig(config) {
   $('useModel').disabled=!state.modelReady;
   if(!state.modelReady)$('useModel').checked=false;
   $('engineBadge').textContent=config.llm_ready?'大模型辅助已配置':'本地解析';
-  $('modelHelp').textContent=config.llm_ready?'当前文字模型：'+config.model+'。勾选后辅助抽取。':(config.model_error||'尚未配置模型，可先使用本地解析。');
+  $('modelHelp').textContent=config.llm_ready?'当前文字模型：'+config.model+'。勾选后辅助抽取。':((config.model_error||'尚未配置模型')+'；可在上方「模型设置」中填写保存，也可先使用本地解析。');
 }
 window.addEventListener('focus',()=>api('/approval/api/config').then(applyModelConfig).catch(()=>{}));
 (async()=>{

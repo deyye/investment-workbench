@@ -178,7 +178,9 @@ def public_config():
             raise ModelError('请配置 LLM_MODEL')
     except (ModelError, ValueError) as exc:
         reason = str(exc).strip() or '请检查服务地址、密钥和模型名'
-        out['model_error'] = '模型配置未完成：' + reason + '（可在上方「模型设置」中填写保存，立即生效）'
+        # 这里只返回与页面无关的事实。审批页和设置页的操作位置不同，
+        # 导航提示由各自前端补充，避免在设置页里还叫用户去“上方模型设置”。
+        out['model_error'] = '模型配置未完成：' + reason
         return out
     key = effective('LLM_API_KEY').strip()
     from_file = not key and bool(effective('LLM_API_KEY_FILE').strip())

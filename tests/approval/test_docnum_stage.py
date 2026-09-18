@@ -17,7 +17,7 @@
 """
 import re, tempfile, unittest
 from pathlib import Path
-import fitz
+import pymupdf as fitz
 from app.extract import (extract, classify_stage, normalize_doc_number,
                          DOC_NUMBER_RE, STAGES)
 from app.review import update

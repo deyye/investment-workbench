@@ -1,6 +1,11 @@
 services:
   workbench:
     build: .
+    environment:
+      # The process binds 0.0.0.0 inside the container, while the published
+      # host port below remains loopback-only.
+      WORKBENCH_ALLOW_REMOTE: "true"
+      WORKBENCH_CONTAINER_LOOPBACK_ONLY: "true"
     ports:
       - "127.0.0.1:8765:8765"
     volumes:

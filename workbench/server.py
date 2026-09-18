@@ -1,6 +1,9 @@
 """One process, one HTTP listener, two business applications."""
 import argparse
 import atexit
+import base64
+import hmac
+import ipaddress
 import os
 import secrets
 import threading
@@ -8,7 +11,6 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from flask import Flask, jsonify, redirect, render_template, request
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
-from werkzeug.serving import run_simple
 from core import llm, shell
 from core.policy_model import SharedPolicyConfig
 from app.server import Store
@@ -40,6 +42,105 @@ RETURN_TARGETS = (
 # 在界面上表现为一个按了没反应的按钮。
 RETURN_BLOCKED = {'/settings/model', '/policy/settings/model'}
 
+SECURITY_HEADERS = (
+    ('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; "
+     "style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; "
+     "connect-src 'self'; font-src 'self' data:; object-src 'none'; "
+     "base-uri 'self'; frame-ancestors 'none'; form-action 'self'"),
+    ('X-Content-Type-Options', 'nosniff'),
+    ('X-Frame-Options', 'DENY'),
+    ('Referrer-Policy', 'same-origin'),
+    ('Permissions-Policy', 'camera=(), microphone=(), geolocation=()'),
+    ('Cross-Origin-Opener-Policy', 'same-origin'),
+    ('X-Permitted-Cross-Domain-Policies', 'none'),
+)
+
+
+class DeploymentMiddleware:
+    """Apply browser hardening and optional HTTP Basic authentication.
+
+    This sits outside ``DispatcherMiddleware`` so the same policy protects the
+    workbench, approval adapter and mounted policy application.
+    """
+
+    def __init__(self, application, auth=None):
+        self.application = application
+        self.auth = auth
+
+    @staticmethod
+    def _secure_start(start_response):
+        def wrapped(status, headers, exc_info=None):
+            existing = {name.lower() for name, _ in headers}
+            headers.extend((name, value) for name, value in SECURITY_HEADERS
+                           if name.lower() not in existing)
+            return start_response(status, headers, exc_info)
+        return wrapped
+
+    def _authenticated(self, environ):
+        if self.auth is None:
+            return True
+        value = environ.get('HTTP_AUTHORIZATION', '')
+        if not value.startswith('Basic '):
+            return False
+        try:
+            raw = base64.b64decode(value[6:], validate=True).decode('utf-8')
+            username, password = raw.split(':', 1)
+        except (ValueError, UnicodeError):
+            return False
+        expected_user, expected_password = self.auth
+        return (hmac.compare_digest(username, expected_user)
+                and hmac.compare_digest(password, expected_password))
+
+    def __call__(self, environ, start_response):
+        secure_start = self._secure_start(start_response)
+        # Health probes contain no business data and must remain usable by
+        # container/orchestrator checks even when the UI is protected.
+        if environ.get('PATH_INFO') == '/api/health':
+            return self.application(environ, secure_start)
+        if not self._authenticated(environ):
+            body = '需要身份验证'.encode('utf-8')
+            secure_start('401 Unauthorized', [
+                ('Content-Type', 'text/plain; charset=utf-8'),
+                ('Content-Length', str(len(body))),
+                ('Cache-Control', 'no-store'),
+                ('WWW-Authenticate', 'Basic realm="Investment Workbench", charset="UTF-8"'),
+            ])
+            return [body]
+        return self.application(environ, secure_start)
+
+
+def is_loopback_host(host):
+    """Return whether a bind target is restricted to this machine."""
+    if host.lower() == 'localhost':
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def deployment_auth(host):
+    """Read deployment safeguards after ``.env`` has been loaded."""
+    username = os.getenv('WORKBENCH_AUTH_USER', '')
+    password = os.getenv('WORKBENCH_AUTH_PASSWORD', '')
+    if bool(username) != bool(password):
+        raise ValueError('WORKBENCH_AUTH_USER 与 WORKBENCH_AUTH_PASSWORD 必须同时设置')
+    if not is_loopback_host(host):
+        if os.getenv('WORKBENCH_ALLOW_REMOTE', '').lower() != 'true':
+            raise ValueError('非本机监听默认关闭；确认已配置 TLS 反向代理后设置 WORKBENCH_ALLOW_REMOTE=true')
+        # The supplied Compose file publishes the container port on the host's
+        # loopback interface only.  Inside that container the process still has
+        # to bind 0.0.0.0, so allow this narrowly named, explicit assertion.
+        # A standalone image does not set it and therefore remains fail-closed.
+        container_loopback = os.getenv('WORKBENCH_CONTAINER_LOOPBACK_ONLY', '').lower() == 'true'
+        if container_loopback:
+            return (username, password) if username else None
+        if not username:
+            raise ValueError('非本机监听必须设置 WORKBENCH_AUTH_USER 与 WORKBENCH_AUTH_PASSWORD')
+        if os.getenv('WORKBENCH_COOKIE_SECURE', '').lower() != 'true':
+            raise ValueError('非本机监听必须通过 TLS，并设置 WORKBENCH_COOKIE_SECURE=true')
+    return (username, password) if username else None
+
 
 def return_target(referrer, host):
     """算出模型设置页顶部「返回」该指向哪里。
@@ -63,13 +164,17 @@ def return_target(referrer, host):
     return fallback
 
 
-def create_app(data_dir=None, policy_config=None):
+def create_app(data_dir=None, policy_config=None, auth=None):
     _load_dotenv(ROOT / '.env')
     data = Path(data_dir or os.getenv('WORKBENCH_DATA_DIR', ROOT / 'data')).resolve()
     data.mkdir(parents=True, exist_ok=True)
     llm.set_config_path(data / 'model_config.json')
     app = Flask(__name__)
     app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
+    cookie_secure = os.getenv('WORKBENCH_COOKIE_SECURE', '').lower() == 'true'
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_SECURE'] = cookie_secure
     app.secret_key = secrets.token_hex(32)
     # 套件条高亮判据（与政策侧共用 core/shell.py 一份实现）。本应用里未匹配到
     # `/approval` / `/policy` / `/settings` 前缀的就是工作台自己的页（`/`、`/tasks`）。
@@ -84,6 +189,13 @@ def create_app(data_dir=None, policy_config=None):
     cfg.db_path = cfg.data_dir / 'policy.db'
     cfg.llm = SharedPolicyConfig(cfg.llm)
     policy = policy_app(cfg)
+    # ``policy`` is a separate Flask application mounted below ``/policy``.
+    # Cookie settings on the outer workbench app do not propagate through
+    # DispatcherMiddleware, so apply the same browser policy explicitly.
+    policy.config['SESSION_COOKIE_HTTPONLY'] = True
+    policy.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    policy.config['SESSION_COOKIE_SECURE'] = cookie_secure
+    policy.config['SESSION_COOKIE_PATH'] = '/policy'
     app.extensions['policy_app'] = policy
     app.extensions['policy_config'] = cfg
     # The old policy form is inaccessible; all entry points lead to one form.
@@ -160,7 +272,8 @@ def create_app(data_dir=None, policy_config=None):
             db.close()
         return render_template('tasks.html', jobs=store.snapshot_jobs(), runs=runs)
 
-    app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {'/policy': policy.wsgi_app})
+    mounted = DispatcherMiddleware(app.wsgi_app, {'/policy': policy.wsgi_app})
+    app.wsgi_app = DeploymentMiddleware(mounted, auth=auth)
     return app
 
 
@@ -170,11 +283,24 @@ def main():
     parser.add_argument('--host', default=os.getenv('HOST', '127.0.0.1'))
     parser.add_argument('--port', type=int, default=int(os.getenv('PORT', '8765')))
     parser.add_argument('--data-dir', default=None)
+    parser.add_argument('--dev-server', action='store_true', help='仅开发调试：改用 Werkzeug 开发服务器')
     args = parser.parse_args()
-    app = create_app(args.data_dir)
+    try:
+        auth = deployment_auth(args.host)
+    except ValueError as exc:
+        parser.error(str(exc))
+    app = create_app(args.data_dir, auth=auth)
     print(f'投资项目智能工作台：http://{args.host}:{args.port}', flush=True)
     try:
-        run_simple(args.host, args.port, app, threaded=True, use_reloader=False)
+        if args.dev_server:
+            from werkzeug.serving import run_simple
+            run_simple(args.host, args.port, app, threaded=True, use_reloader=False)
+        else:
+            try:
+                from waitress import serve
+            except ImportError:
+                parser.error('缺少生产服务器依赖，请先执行 pip install -r requirements.txt')
+            serve(app, host=args.host, port=args.port, threads=8)
     finally:
         app.extensions['approval_store'].executor.shutdown(wait=True)
 

@@ -11,7 +11,7 @@
 import json, sys, tempfile
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import fitz
+import pymupdf as fitz
 from app.extract import parse_pdf
 from app import vision_ocr
 

@@ -9,14 +9,14 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-import fitz
+import pymupdf as fitz
 import pytest
 from bs4 import BeautifulSoup
 from bs4.element import Comment, NavigableString, Tag
 from core import llm
 from policy_collector.llm_client import LLMClient
 from policy_collector.pipeline import Pipeline
-from workbench.server import create_app
+from workbench.server import create_app, deployment_auth, is_loopback_host
 
 HEADERS = {'X-Requested-With': 'ApprovalAgent'}
 
@@ -53,6 +53,83 @@ def test_pages_and_namespaced_links(suite):
     assert client.get('/policy/settings/model').location == '/settings/model'
     assert b'id="modelBase"' not in client.get('/approval/').data
     assert post(client, '/approval/api/model/config', {}).status_code == 410
+
+
+def test_policy_clear_count_never_resolves_to_dict_method(suite):
+    """Jinja ``todos.clear`` resolves to ``dict.clear`` before the mapping key."""
+    _, client, _ = suite
+    for path in ('/policy/', '/policy/todos'):
+        html = client.get(path).get_data(as_text=True)
+        assert '<built-in method clear' not in html, path
+        assert '另有 0 条' in html, path
+
+
+def test_security_headers_cover_all_mounted_businesses(suite):
+    _, client, _ = suite
+    required = {
+        'Content-Security-Policy', 'X-Content-Type-Options', 'X-Frame-Options',
+        'Referrer-Policy', 'Permissions-Policy', 'Cross-Origin-Opener-Policy',
+    }
+    for path in ('/', '/approval/', '/policy/', '/api/health'):
+        response = client.get(path)
+        assert required <= set(response.headers.keys()), path
+        assert response.headers['X-Frame-Options'] == 'DENY'
+        assert "frame-ancestors 'none'" in response.headers['Content-Security-Policy']
+        if path == '/policy/':
+            assert 'HttpOnly' in response.headers.get('Set-Cookie', '')
+            assert 'SameSite=Lax' in response.headers.get('Set-Cookie', '')
+
+
+def test_optional_basic_auth_protects_workbench_and_mounted_policy(tmp_path):
+    app = create_app(tmp_path, auth=('reviewer', 'secret'))
+    client = app.test_client()
+    try:
+        for path in ('/', '/approval/', '/policy/'):
+            response = client.get(path)
+            assert response.status_code == 401, path
+            assert response.headers['WWW-Authenticate'].startswith('Basic ')
+        assert client.get('/api/health').status_code == 200
+        token = base64.b64encode(b'reviewer:secret').decode()
+        headers = {'Authorization': 'Basic ' + token}
+        assert client.get('/', headers=headers).status_code == 200
+        assert client.get('/policy/', headers=headers).status_code == 200
+        bad = base64.b64encode(b'reviewer:wrong').decode()
+        assert client.get('/', headers={'Authorization': 'Basic ' + bad}).status_code == 401
+    finally:
+        app.extensions['approval_store'].executor.shutdown(wait=True)
+
+
+def test_remote_bind_requires_explicit_opt_in_and_credentials(monkeypatch):
+    for key in ('WORKBENCH_ALLOW_REMOTE', 'WORKBENCH_AUTH_USER', 'WORKBENCH_AUTH_PASSWORD',
+                'WORKBENCH_COOKIE_SECURE', 'WORKBENCH_CONTAINER_LOOPBACK_ONLY'):
+        monkeypatch.delenv(key, raising=False)
+    assert is_loopback_host('127.0.0.1') and is_loopback_host('::1') and is_loopback_host('localhost')
+    assert not is_loopback_host('0.0.0.0') and not is_loopback_host('192.168.1.10')
+    with pytest.raises(ValueError, match='默认关闭'):
+        deployment_auth('0.0.0.0')
+    monkeypatch.setenv('WORKBENCH_ALLOW_REMOTE', 'true')
+    with pytest.raises(ValueError, match='必须设置'):
+        deployment_auth('0.0.0.0')
+    monkeypatch.setenv('WORKBENCH_CONTAINER_LOOPBACK_ONLY', 'true')
+    assert deployment_auth('0.0.0.0') is None
+    monkeypatch.delenv('WORKBENCH_CONTAINER_LOOPBACK_ONLY')
+    monkeypatch.setenv('WORKBENCH_AUTH_USER', 'reviewer')
+    monkeypatch.setenv('WORKBENCH_AUTH_PASSWORD', 'secret')
+    with pytest.raises(ValueError, match='TLS'):
+        deployment_auth('0.0.0.0')
+    monkeypatch.setenv('WORKBENCH_COOKIE_SECURE', 'true')
+    assert deployment_auth('0.0.0.0') == ('reviewer', 'secret')
+
+
+def test_model_error_copy_matches_each_page(suite):
+    _, client, _ = suite
+    error = client.get('/api/model/config').json['model_error']
+    assert error.startswith('模型配置未完成：')
+    assert '上方' not in error and '下方' not in error
+    settings_js = client.get('/static/model.js').get_data(as_text=True)
+    approval_js = client.get('/approval/app.js').get_data(as_text=True)
+    assert '请在下方填写并保存' in settings_js
+    assert '可在上方「模型设置」中填写保存' in approval_js
 
 
 def test_write_origin_and_policy_csrf(suite):

@@ -22,7 +22,7 @@
   <strong>需逐条人工处理 {{ todos.human }} 条</strong>（结论待确认 + 待定口径）·
   另可抽检 {{ todos.counts.get('candidate', 0) }} 条高置信候选 ·
   机器自修 {{ todos.machine }} 条 · 运维处理 {{ todos.system }} 条 ·
-  另有 {{ todos.clear }} 条判定明确，无需人工
+  另有 {{ todos['clear'] }} 条判定明确，无需人工
 </p>
 
 {% for key in todo_order %}

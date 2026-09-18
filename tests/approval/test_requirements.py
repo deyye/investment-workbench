@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import fitz
+import pymupdf as fitz
 from openpyxl import load_workbook
 
 from app.extract import extract, FIELDS

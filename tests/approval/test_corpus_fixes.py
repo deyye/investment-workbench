@@ -6,7 +6,7 @@
 import io, tempfile, unittest
 from pathlib import Path
 from unittest.mock import patch
-import fitz
+import pymupdf as fitz
 from PIL import Image
 from app.extract import (extract, parse_pdf, ORG, header_band, refine_header_mark, INK_BLANK_RATIO)
 

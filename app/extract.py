@@ -6,7 +6,7 @@ from . import vision_ocr
 import base64, copy, io, json, os, re, shutil, tempfile, urllib.request
 from decimal import Decimal
 from pathlib import Path
-import fitz
+import pymupdf as fitz
 import numpy as np
 from PIL import Image, ImageFilter
 

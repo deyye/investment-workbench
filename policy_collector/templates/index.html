@@ -21,7 +21,7 @@
   </a>
 {% endfor %}
 </div>
-<p class="todo-summary">共 {{ todos.total }} 条在库 · 另有 {{ todos.clear }} 条判定明确无需人工。规则判正且证据强的会进「高置信候选」供抽检——不会静默入库；换成模型模式可直接确认。</p>
+<p class="todo-summary">共 {{ todos.total }} 条在库 · 另有 {{ todos['clear'] }} 条判定明确无需人工。规则判正且证据强的会进「高置信候选」供抽检——不会静默入库；换成模型模式可直接确认。</p>
 {% endif %}
 <div class="section-heading"><h2>政策分类导航</h2><span>按政策作用查阅资料</span></div>
 <div class="category-grid">

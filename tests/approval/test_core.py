@@ -1,7 +1,7 @@
 import io,json,os,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
-import fitz
+import pymupdf as fitz
 from openpyxl import load_workbook
 from app.extract import numeric,augment_llm,extract,FIELDS
 from app.compare import compare_cells,rows_for,export_xlsx,safe

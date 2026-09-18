@@ -14,13 +14,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-之后每次只运行：
+之后每次只运行（默认使用 Waitress 生产级 WSGI 服务）：
 
 ```bash
 python start.py
 ```
 
 打开 **http://127.0.0.1:8765/**。无需启动第二个服务，不需要 Node.js。
+
+仅在本地开发调试时可显式使用 Werkzeug：`python start.py --dev-server`。
 
 也可 `python -m workbench`；修改端口或数据目录：
 
@@ -82,6 +84,15 @@ docker compose up --build -d
 
 本次环境没有 Docker，镜像构建尚未实测；本地 Python 启动和 API 流程已实测。
 
+## 访问与部署安全
+
+- 默认只监听 `127.0.0.1`。绑定 `0.0.0.0` 或局域网地址时默认拒绝启动，避免意外把材料、模型配置和维护入口暴露出去。
+- 推荐由带 TLS 与认证的反向代理对外提供服务，应用本身仍绑定回环地址。
+- 如确需让应用直接监听非本机地址，必须同时设置 `WORKBENCH_ALLOW_REMOTE=true`、`WORKBENCH_AUTH_USER`、`WORKBENCH_AUTH_PASSWORD` 与 `WORKBENCH_COOKIE_SECURE=true`；最后一项要求外层已经提供 HTTPS。
+- 官方 `compose.yaml` 是例外：容器内监听 `0.0.0.0`，但宿主机只发布到 `127.0.0.1`，因此通过 `WORKBENCH_CONTAINER_LOOPBACK_ONLY=true` 明确声明仍是本机访问。不要在对外发布容器端口时沿用这个值。
+- 也可在本机监听时设置用户名和密码，为全部三个模块启用统一 HTTP Basic 认证。不要把密码写进仓库；使用进程环境变量或系统密钥管理工具注入。
+- 页面统一返回 CSP、防嵌入、来源策略、权限策略等安全响应头；政策表单保留 CSRF 校验，JSON 写操作保留同源请求校验。
+
 ## OCR 与文件格式
 
 文本 PDF 可直接解析。扫描 PDF 推荐安装 Tesseract 及 `chi_sim` 中文语言包；政策扫描附件还需 Poppler。旧 `.doc/.xls` 转换需要 LibreOffice。macOS 审批侧保留原有 Vision OCR 备用能力。缺少依赖时处理过程会给出失败或待复核提示，不能把“程序启动成功”等同于所有格式均可识别。
@@ -121,11 +132,11 @@ pip install -r requirements-dev.txt
 python -m pytest tests -q
 ```
 
-本次：407 passed，10 skipped，22 subtests passed。详见 [验证记录](docs/VALIDATION.md)。不需要真实 API 密钥；模型调用测试通过本地 HTTP 模拟服务完成。外部付费模型、公网全量采集、Docker 和浏览器视觉验收未在本次完成。
+最新验证结果见 [验证记录](docs/VALIDATION.md)。不需要真实 API 密钥；模型调用测试通过本地 HTTP 模拟服务完成。外部付费模型、公网全量采集和 Docker 仍需在对应环境单独验收。
 
 ## 使用边界
 
-默认绑定本机，适合个人研究与内网演示。当前没有多用户账户、权限隔离和分布式任务队列；若要对外开放或多人生产使用，需要部署认证和生产 WSGI 服务，并调整任务生命周期。当前不要启用多进程 worker，否则审批的内存任务状态会分散。
+默认绑定本机，适合个人研究与内网演示。已提供统一的单账户访问保护，但仍没有多用户角色、项目级权限隔离和分布式任务队列；多人生产使用还需要外置身份系统和细粒度授权。当前不要启用多进程 worker，否则审批的内存任务状态会分散。
 
 ## 来源
 

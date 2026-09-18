@@ -2,7 +2,7 @@ import copy,io,json,tempfile,unittest
 from decimal import Decimal
 from pathlib import Path
 from unittest.mock import patch
-import fitz
+import pymupdf as fitz
 from app.extract import extract,FIELDS,parse_pdf,numeric
 from app.quantities import quantity_key
 from app.compare import rows_for,compare_cells

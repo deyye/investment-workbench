@@ -2,7 +2,7 @@
 import argparse,hashlib,sys,time,uuid
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-import fitz
+import pymupdf as fitz
 from app.server import Store,main
 
 def synthetic(folder):

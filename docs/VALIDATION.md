@@ -27,6 +27,29 @@
 
 历史验证记录在 `docs/upstream/`；这些历史成绩与本次测试结果分开理解。
 
+## 追加轮次：自检问题修复与部署加固（2026-09-18）
+
+`python -m pytest tests -q`：**497 passed, 10 skipped, 22 subtests passed**，约 39 秒；
+本轮在 Python 3.13 下没有再产生 PyMuPDF/SWIG 弃用警告。
+
+- 修复政策工作总览与待办清单把字典键 `clear` 误解析成 `dict.clear`、向用户显示
+  `<built-in method clear ...>` 的问题；两个页面均增加真实渲染回归断言。
+- 模型配置错误改为返回与页面无关的事实，设置页明确提示“在下方填写”，审批页保留
+  “从上方模型设置进入”的操作指引。
+- 默认启动服务器改为 Waitress；Werkzeug 仅通过 `--dev-server` 显式用于本地调试。
+- 三个挂载模块统一增加 CSP、防嵌入、来源策略、权限策略等响应头；两个 Flask 应用分别配置
+  `HttpOnly`、`SameSite=Lax`，政策 Cookie 路径限制到 `/policy`。
+- 增加可选的全站 HTTP Basic 保护。非回环地址默认拒绝启动；直接对外监听必须显式开启、
+  配置认证并声明 HTTPS Cookie。健康检查保持无敏感信息且可供编排器探测。
+- 官方 Compose 仍只把端口发布到宿主机 `127.0.0.1`；新增明确的容器回环声明，既允许容器内
+  监听 `0.0.0.0`，又避免单独运行镜像时无意对外暴露。`docker compose config` 已验证通过。
+- 审批解析及相关脚本、测试从弃用的 `fitz` 导入名迁移到 `pymupdf as fitz`。
+- Safari 连接临时 Waitress 服务，真实查看政策工作总览、模型设置与审批工作区：统计值正确、
+  设置页文案正确、三页均正常渲染，之前自动化观察到的白屏未复现。
+
+仍未完成：10 项需要外部真实 PDF 的回归、真实付费模型、公网全量采集与 Docker 镜像构建。
+本机只有 Docker CLI、没有运行中的 Docker daemon，因此本轮只能验证 Compose 展开配置。
+
 ## 追加轮次：列表页细节打磨（2026-09-16 晚）
 
 `python -m pytest tests -q`：**421 passed, 10 skipped, 22 subtests passed**，约 77 秒。

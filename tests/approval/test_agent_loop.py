@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import fitz
+import pymupdf as fitz
 
 from app import agent_loop as A
 from app.extract import extract, mark_conflicts
