@@ -4,7 +4,7 @@
   --navy-deep:#10253e;
   --blue:#245e98;
   --ink:#20344d;
-  --muted:#5d6f85;
+  --muted:#51677f;
   --line:#e5eaf0;
   --paper:#fff;
   --bg:#f3f5f8;
@@ -90,7 +90,7 @@
   display:flex;
   align-items:center;
   gap:8px;
-  font-size:12px;
+  font-size:13px;
   color:#c3d1e0;
   white-space:nowrap
 }
@@ -144,7 +144,7 @@
   padding:9px 10px;
   border-radius:var(--r-sm);
   color:#35485f;
-  font-size:13px
+  font-size:14px
 }
 .nav-item .icon {
   width:17px;
@@ -176,13 +176,13 @@
   padding:14px 18px;
   border-top:1px solid var(--line);
   color:var(--muted);
-  font-size:11px;
+  font-size:12px;
   line-height:1.7
 }
 .side-foot strong {
   display:block;
   color:var(--ink);
-  font-size:12px;
+  font-size:13px;
   font-weight:600
 }
 
@@ -204,7 +204,7 @@
   gap:6px;
   margin-bottom:10px;
   color:var(--muted);
-  font-size:11px
+  font-size:13px
 }
 .breadcrumb strong {
   color:var(--ink);
@@ -221,7 +221,7 @@
 .page-head p {
   margin:7px 0 0;
   color:var(--muted);
-  font-size:12px;
+  font-size:14px;
   line-height:1.7
 }
 .page-head-actions {
@@ -254,7 +254,7 @@
   padding-top:15px;
   border-top:1px solid var(--line);
   color:var(--muted);
-  font-size:11px
+  font-size:12px
 }
 
 /* ---- 壳的响应式 ---- */
@@ -302,7 +302,7 @@
     flex-direction:column;
     gap:6px;
     padding:10px 6px;
-    font-size:11px
+    font-size:12px
   }
   .nav-indicator {
     display:none
@@ -341,7 +341,7 @@ body {
   margin:0;
   color:var(--ink);
   background:var(--bg);
-  font:14px/1.65 var(--font);
+  font:15px/1.7 var(--font);
   -webkit-font-smoothing:antialiased
 }
 a {
@@ -389,6 +389,9 @@ input,select,textarea {
 }
 input::placeholder {
   color:#8995a5
+}
+textarea::placeholder {
+  color:#7c8999
 }
 input[type=checkbox] {
   min-height:0;
@@ -626,7 +629,7 @@ details[open] summary {
   border-bottom:1px solid #edf0f4
 }
 .panel-heading h2 {
-  font-size:14px;
+  font-size:16px;
   position:relative;
   padding-left:12px
 }
@@ -641,7 +644,7 @@ details[open] summary {
   border-radius:2px
 }
 .text-link {
-  font-size:11px;
+  font-size:13px;
   white-space:nowrap;
   color:#74879c
 }
@@ -684,7 +687,7 @@ details[open] summary {
   min-width:0
 }
 .feed-content h3 {
-  font-size:12px;
+  font-size:14px;
   line-height:1.8;
   display:-webkit-box;
   -webkit-line-clamp:2;
@@ -695,7 +698,7 @@ details[open] summary {
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  font-size:11px;
+  font-size:13px;
   color:#8c99a9;
   margin-top:8px
 }
@@ -861,7 +864,7 @@ details[open] summary {
   border-radius:5px;
   background:white;
   color:#4e627a;
-  font-size:12px;
+  font-size:14px;
   min-height:39px;
   white-space:nowrap;
   font-weight:500;
@@ -902,7 +905,7 @@ details[open] summary {
 }
 .tag,.chip {
   display:inline-block;
-  font-size:11px;
+  font-size:12px;
   line-height:1.8;
   padding:2px 8px;
   border-radius:3px;
@@ -1011,8 +1014,8 @@ details[open] summary {
   border:1px solid #dfe8f0;
   border-radius:6px;
   background:#edf3f8;
-  font-size:12px;
-  color:#657c92;
+  font-size:14px;
+  color:#526a82;
   margin-bottom:18px;
   line-height:1.9
 }
@@ -1059,7 +1062,7 @@ details[open] summary {
 }
 .dim,.meta,.id {
   color:#8b98a7;
-  font-size:12px
+  font-size:13px
 }
 .mono {
   font-family:Consolas,"SFMono-Regular",monospace;
@@ -1095,7 +1098,7 @@ table.list th {
   padding:14px 18px;
   background:#f8fafc;
   color:#7d8b9c;
-  font-size:11px;
+  font-size:12px;
   font-weight:500;
   white-space:nowrap;
   border-bottom:1px solid var(--line)
@@ -1104,7 +1107,7 @@ table.list td {
   padding:18px;
   border-bottom:1px solid #edf0f4;
   vertical-align:top;
-  font-size:12px;
+  font-size:13px;
   line-height:1.9
 }
 table.list tr:last-child td {
@@ -1118,7 +1121,7 @@ td.tt {
   max-width:420px
 }
 td.tt a {
-  font-size:12px;
+  font-size:14px;
   color:#324c68;
   font-weight:500
 }
@@ -1786,6 +1789,31 @@ pre.content {
 .review-body,.trace-body {
   padding:20px
 }
+.review-note-field {
+  display:block;
+  margin-top:20px;
+  color:#344b64;
+  font-size:14px;
+  font-weight:600
+}
+.review-note-field small {
+  margin-left:5px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:400
+}
+.review-note-field textarea {
+  display:block;
+  width:100%;
+  min-height:104px;
+  margin:8px 0 0;
+  padding:11px 12px;
+  color:var(--ink);
+  font-size:14px;
+  font-weight:400;
+  line-height:1.7;
+  resize:vertical
+}
 .review-primary {
   display:flex;
   gap:8px;
@@ -1793,8 +1821,9 @@ pre.content {
 }
 .review-primary .btn {
   flex:1;
-  padding:9px 7px;
-  font-size:12px
+  min-height:42px;
+  padding:10px 8px;
+  font-size:14px
 }
 .review-adjust {
   border-top:1px solid var(--line);
@@ -1802,7 +1831,7 @@ pre.content {
   margin-top:20px
 }
 .review-adjust h3 {
-  font-size:12px;
+  font-size:14px;
   margin-bottom:12px
 }
 .checkbox-grid {
@@ -1815,13 +1844,13 @@ pre.content {
   display:flex;
   align-items:center;
   gap:6px;
-  font-size:12px
+  font-size:13px
 }
 .reason {
-  font-size:12px;
-  line-height:1.9;
+  font-size:14px;
+  line-height:1.85;
   margin-top:19px;
-  color:#65758a
+  color:#52677f
 }
 .reason b {
   display:block;
@@ -2053,7 +2082,7 @@ pre.content {
 .agent-timeline {padding-left:22px;line-height:1.8;}
 .agent-timeline li {padding:8px 0;border-bottom:1px solid #edf0f2;overflow-wrap:anywhere;}
 .agent-timeline time {color:#687888;font-size:12px;margin-right:8px;}
-.review-form textarea {width:100%;display:block;margin:8px 0 12px;}
+.review-form textarea {width:100%;display:block;margin:8px 0 0;}
 
 /* 一键全国采集入口（2026-09-13） */
 .batch-actions { border:1px solid var(--line); border-radius:10px; padding:18px 20px; margin-bottom:22px; background:var(--soft) }

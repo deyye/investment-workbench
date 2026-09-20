@@ -2,7 +2,7 @@
 配色与字体刻度参照 deyye/policy-collector（机构深蓝 + 纸白 + 克制朱红）。
 本次改动范围仅限 color / background / border-color / font-family / font-size，
 布局、尺寸、间距、定位等结构性声明一律保持原样。 */
-:root{--navy:#142e4c;--navy-deep:#10253e;--blue:#245e98;--brand:var(--blue);--brand-soft:#eaf0fa;--brand-ring:#5b8fc4;--ink:#20344d;--muted:#5d6f85;--line:#e5eaf0;--paper:#fff;--bg:#f3f5f8;--soft:#f8fafc;--red:#b4524d;--gold:#b09564;--r-sm:6px;--r-md:9px;--r-lg:14px;--shadow:0 3px 16px #17324f0a;--font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Helvetica Neue",Arial,sans-serif;--font-serif:"Noto Serif CJK SC","Songti SC","STSong","SimSun",Georgia,serif;font-family:var(--font);color:var(--ink);font-size:14px}
+:root{--navy:#142e4c;--navy-deep:#10253e;--blue:#245e98;--brand:var(--blue);--brand-soft:#eaf0fa;--brand-ring:#5b8fc4;--ink:#20344d;--muted:#51677f;--line:#e5eaf0;--paper:#fff;--bg:#f3f5f8;--soft:#f8fafc;--red:#b4524d;--gold:#b09564;--r-sm:6px;--r-md:9px;--r-lg:14px;--shadow:0 3px 16px #17324f0a;--font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Helvetica Neue",Arial,sans-serif;--font-serif:"Noto Serif CJK SC","Songti SC","STSong","SimSun",Georgia,serif;font-family:var(--font);color:var(--ink);font-size:15px}
 /* ==========================================================================
    统一外壳 L0–L4（三端共用同一份，改一处要同步另两份）
    L0 .suite-bar 套件条 / L1 .sidebar 模块左栏 / L2 .page-head 页头
@@ -373,7 +373,7 @@ body{margin:0;background:var(--bg)}
    结果只有审批页的套件条出现下划线——另两端被各自的全局规则掩盖了。 */
 a{color:var(--blue);text-decoration:none}
 button,a,input,textarea{font:inherit}
-button,.button{cursor:pointer;border:1px solid var(--line);border-radius:5px;padding:9px 13px;background:white;color:var(--ink);text-decoration:none;font-size:12px}
+button,.button{cursor:pointer;border:1px solid var(--line);border-radius:5px;padding:9px 13px;background:white;color:var(--ink);text-decoration:none;font-size:14px}
 button:hover,.button:hover{border-color:var(--blue);background:#eef3f8}
 button:disabled{cursor:wait;opacity:.5}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--brand-ring);outline-offset:2px}
@@ -382,13 +382,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
 .primary{background:var(--navy);color:white;border-color:var(--navy)}
 .primary:hover{background:var(--blue);color:white}
 .model-toggle{margin-top:20px;display:flex;align-items:center;gap:5px;font-size:12px}
-.muted{color:var(--muted);font-size:12px;line-height:1.7}
+.muted{color:var(--muted);font-size:13px;line-height:1.75}
 .sidebar .muted{font-size:12px}
 .sidebar-note{margin-top:auto;padding-top:30px;font-size:12px;color:var(--muted);line-height:1.9}
 #projects{margin:20px -6px}
 .project-item{display:block;text-align:left;width:100%;padding:15px 11px;border:0;border-left:3px solid transparent;margin-bottom:8px;line-height:1.6;background:transparent}
-.project-item strong{font-weight:500;font-size:12px;display:block}
-.project-item small{display:block;color:var(--muted);font-size:12px;margin-top:7px}
+.project-item strong{font-weight:500;font-size:14px;display:block}
+.project-item small{display:block;color:var(--muted);font-size:13px;margin-top:7px}
 .project-item.active{border-left-color:#b4524d;background:#eef3f8}
 .project-item.active strong{color:var(--navy);font-weight:bold}
 .eyebrow{color:var(--blue);font-size:12px;letter-spacing:1px}
@@ -405,17 +405,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
 .missing{background:#f0f3f7;color:var(--muted)}
 .review{background:#faeeed}
 .table-wrap{overflow:auto;background:white;border:1px solid var(--line);border-radius:6px}
-table{border-collapse:collapse;width:100%;font-size:12px;table-layout:fixed;min-width:510px}
+table{border-collapse:collapse;width:100%;font-size:13px;table-layout:fixed;min-width:510px}
 th,td{vertical-align:top;border-bottom:1px solid var(--line);border-right:1px solid #eef1f5;text-align:left}
 th{background:#f8fafc;padding:13px 10px;font-weight:600;position:sticky;top:0;z-index:2}
 th:first-child{width:116px}
-th small{font-weight:400;font-size:11px;display:block;margin-top:7px;line-height:1.5;color:var(--muted)}
-td:first-child{padding:14px 10px;font-size:12px;background:#fbfcfe;line-height:1.6}
-.cell-button{border:0;border-radius:0;width:100%;height:100%;padding:13px 10px;text-align:left;background:transparent;line-height:1.8;font-size:12px;overflow-wrap:anywhere}
+th small{font-weight:400;font-size:12px;display:block;margin-top:7px;line-height:1.6;color:var(--muted)}
+td:first-child{padding:14px 10px;font-size:13px;background:#fbfcfe;line-height:1.7}
+.cell-button{border:0;border-radius:0;width:100%;height:100%;padding:13px 10px;text-align:left;background:transparent;line-height:1.8;font-size:13px;overflow-wrap:anywhere}
 .cell-button:hover{background:#f2f7fb}
 .cell-button .cell-value{display:block;max-height:150px;overflow:auto}
-.cell-button small{font-size:11px;color:var(--muted);display:block;margin-top:7px}
-.row-note{display:block;margin-top:7px;font-size:11px;line-height:1.6;color:var(--muted)}
+.cell-button small{font-size:12px;color:var(--muted);display:block;margin-top:7px}
+.row-note{display:block;margin-top:7px;font-size:12px;line-height:1.7;color:var(--muted)}
 .empty{text-align:center;padding:55px 10px}
 .empty-symbol{font-size:40px;font-family:var(--font-serif);color:#8b9fb4;margin-bottom:18px}
 .empty h2{font-size:15px;font-weight:500}
@@ -428,9 +428,9 @@ td:first-child{padding:14px 10px;font-size:12px;background:#fbfcfe;line-height:1
 .evidence-empty{padding:90px 15px;text-align:center;line-height:2;color:var(--muted);font-size:12px}
 .evidence-empty small{font-size:12px}
 .field-detail{padding:20px;background:#fff}
-.field-detail p{font-size:12px;line-height:1.8;margin:10px 0;overflow-wrap:anywhere;max-height:130px;overflow:auto}
+.field-detail p{font-size:13px;line-height:1.85;margin:10px 0;overflow-wrap:anywhere;max-height:130px;overflow:auto}
 .text-button{border:0;padding:0;color:var(--blue);font-size:12px}
-.field-detail blockquote{font-size:12px;background:#f6f9fb;border-left:3px solid #9db5cc;margin:12px 0 0;padding:11px;line-height:1.8;max-height:140px;overflow:auto}
+.field-detail blockquote{font-size:13px;background:#f6f9fb;border-left:3px solid #9db5cc;margin:12px 0 0;padding:11px;line-height:1.85;max-height:140px;overflow:auto}
 .source-link{padding:4px 7px;margin:8px 6px 0 0;font-size:12px}
 .page-controls{display:flex;align-items:center;justify-content:center;gap:20px;padding:12px}
 .page-controls span{font-size:12px;color:var(--muted)}
@@ -448,7 +448,7 @@ td:first-child{padding:14px 10px;font-size:12px;background:#fbfcfe;line-height:1
 dialog{border:1px solid var(--line);border-radius:8px;width:min(550px,90vw);padding:26px;color:var(--ink)}
 dialog::backdrop{background:#142e4c66}
 dialog h2{font-size:16px;margin-top:0}
-textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:5px;line-height:1.7;resize:vertical}
+textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:5px;line-height:1.75;resize:vertical}
 .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
 [hidden]{display:none!important}
 .document-tools{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:15px;align-items:center;font-size:12px}
@@ -465,7 +465,8 @@ select{font:inherit;max-width:100%;padding:8px;border:1px solid var(--line);bord
 #evidencePicker label{display:flex;gap:8px;line-height:1.6}
 #evidencePicker input{flex-shrink:0}
 dialog{max-height:90vh;overflow:auto}
-.cell-button,.row-note,th small{font-size:12px}
+.cell-button{font-size:13px}
+.row-note,th small{font-size:12px}
 th:first-child{width:125px}
 td.comparison-note{background:#f8fafc!important;color:#586e83;font-size:12px!important;padding:9px 12px!important;line-height:1.8!important}
 th:first-child{width:135px}

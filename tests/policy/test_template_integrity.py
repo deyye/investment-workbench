@@ -186,6 +186,17 @@ def test_preview_banner_flag_is_explicit(cfg):
     assert ctx['preview_mode'] is False
 
 
+def test_policy_review_note_is_a_block_field_not_a_hint_callout():
+    """复核备注不能套用内联提示框；Safari 会把含块级 textarea 的背景拆成碎片。"""
+    template = (ROOT / 'policy_collector/templates/policy.html').read_text(encoding='utf-8')
+    css = (ROOT / 'policy_collector/static/style.css').read_text(encoding='utf-8')
+
+    assert '<label class="review-note-field">' in template
+    assert not re.search(r'<label[^>]*class="[^"]*\bhint\b[^"]*"[^>]*>\s*复核备注', template)
+    rule = re.search(r'\.review-note-field\s*\{([^}]*)\}', css)
+    assert rule and 'display:block' in rule.group(1).replace(' ', '')
+
+
 # ── 2. CSS 类名 ───────────────────────────────────────────────
 @pytest.mark.parametrize('template_dir,css_path,whitelist', [
     ('policy_collector/templates', 'policy_collector/static/style.css', POLICY_CLASS_WHITELIST),
